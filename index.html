@@ -518,21 +518,23 @@
 
   <!-- NAV -->
   <nav>
-    <div class="logo">Sound<span>trackd</span></div>
-    <div class="nav-links">
-      <a href="#">Films</a>
-      <a href="#">Members</a>
-      <a href="#">Journal</a>
-    </div>
-    <div class="nav-right">
-      <div class="search-bar">
-        <span class="search-icon">&#9906;</span>
-        <input type="text" placeholder="Search albums, songs, artists..." />
+    <div class="nav-inner">
+      <div class="logo">Sound<span>trackd</span></div>
+      <div class="nav-links">
+        <a href="#">Films</a>
+        <a href="#">Members</a>
+        <a href="#">Journal</a>
       </div>
-      <button class="btn-signin" id="authBtn" onclick="openAuthModal('signin')">Sign in</button>
-      <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
-        <a href="profile.html" style="font-size:0.82rem;color:var(--accent);text-decoration:none;letter-spacing:0.03em" id="userEmail"></a>
-        <button class="btn-signin" onclick="signOut()">Sign out</button>
+      <div class="nav-right">
+        <div class="search-bar">
+          <span class="search-icon">&#9906;</span>
+          <input type="text" placeholder="Search albums, songs, artists..." />
+        </div>
+        <button class="btn-signin" id="authBtn" onclick="openAuthModal('signin')">Sign in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent);text-decoration:none;letter-spacing:0.03em" id="userEmail"></a>
+          <button class="btn-signin" onclick="signOut()">Sign out</button>
+        </div>
       </div>
     </div>
   </nav>
