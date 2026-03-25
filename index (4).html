@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f0b;
+      --surface: #0f1510;
+      --surface2: #161e17;
+      --border: rgba(255,255,255,0.07);
+      --text: #e2e8e3;
+      --muted: #5a6b5c;
+      --accent: #4a9e6b;
+      --accent2: #7c6fcd;
+      --danger: #e05c5c;
+      --star: #c8a96e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 30% at 80% 100%, rgba(74,158,107,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav, .page-wrap, footer { position: relative; z-index: 1; }
+
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(10,15,11,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .logo span { font-style: italic; color: var(--text); }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .nav-links a:hover { color: var(--text); transition: color 0.2s; }
+
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+    .btn-signin {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* SEARCH */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+
+    .search-bar:focus-within { border-color: rgba(200,169,110,0.4); }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    .search-bar input::placeholder { color: var(--muted); }
+
+    .search-icon { color: var(--muted); font-size: 14px; }
+
+    /* HERO */
+    .hero {
+      padding: 5rem 0 3rem;
+      max-width: 680px;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 em { font-style: italic; color: var(--accent); }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 480px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; align-items: center; }
+
+    .btn-primary {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.75rem 2rem;
+      background: var(--accent);
+      color: #0d0d0f;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-ghost {
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+
+    .btn-ghost:hover { color: var(--text); }
+
+    /* DIVIDER */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0;
+      margin-bottom: 2rem;
+    }
+
+    .section-divider h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .section-divider .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-divider .see-all {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+
+    .section-divider .see-all:hover { color: var(--accent); }
+
+    /* TRENDING GRID */
+    .trending-section { padding: 0 0 3rem; }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .album-card { cursor: pointer; display: block; text-decoration: none; color: inherit; }
+    a.album-card { display: block; }
+
+    .album-art {
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--surface2);
+      margin-bottom: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .album-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .album-art .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .album-card:hover .overlay { opacity: 1; }
+
+    .overlay-btn {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.4rem 0.9rem;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .album-rank {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: rgba(13,13,15,0.8);
+      padding: 2px 7px;
+    }
+
+    .album-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .album-artist {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stars { display: flex; gap: 2px; }
+    .star { color: var(--star); font-size: 11px; }
+    .star.empty { color: var(--surface2); }
+
+    /* RECENT REVIEWS */
+    .reviews-section { padding: 0 0 3rem; }
+
+    .review-list { display: flex; flex-direction: column; gap: 0; }
+
+    .review-item {
+      display: flex;
+      gap: 1.25rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .review-thumb {
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+
+    .review-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .review-body { flex: 1; }
+
+    .review-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .review-album {
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+
+    .review-artist {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .review-stars { display: flex; gap: 2px; margin-bottom: 6px; }
+
+    .review-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .review-user {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .review-user span { color: var(--accent2); }
+
+    /* LISTS */
+    .lists-section { padding: 0 0 3rem; }
+
+    .list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .list-card {
+      background: var(--surface);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .list-card:hover { background: var(--surface2); }
+
+    .list-covers {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 0.75rem;
+    }
+
+    .list-cover {
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .list-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+    .list-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .list-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .list-meta span { color: var(--accent2); }
+
+    /* RATE MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      width: 90%;
+      max-width: 420px;
+    }
+
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-stars {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .modal-star { color: var(--surface2); transition: color 0.15s; }
+    .modal-star.lit { color: var(--star); }
+
+    .modal textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 300;
+      padding: 0.75rem 1rem;
+      resize: none;
+      height: 100px;
+      outline: none;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal textarea:focus { border-color: rgba(200,169,110,0.4); }
+    .modal textarea::placeholder { color: var(--muted); }
+
+    .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+
+    .btn-cancel {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.25rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    /* PLACEHOLDER ARTS (colored blocks as stand-ins) */
+    .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">Sound<span>trackd</span></div>
+      <div class="nav-links">
+        <a href="#">Films</a>
+        <a href="#">Members</a>
+        <a href="#">Journal</a>
+      </div>
+      <div class="nav-right">
+        <div class="search-bar">
+          <span class="search-icon">&#9906;</span>
+          <input type="text" placeholder="Search albums, songs, artists..." />
+        </div>
+        <button class="btn-signin" id="authBtn" onclick="openAuthModal('signin')">Sign in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent);text-decoration:none;letter-spacing:0.03em" id="userEmail"></a>
+          <button class="btn-signin" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-eyebrow">Track what you listen to</p>
+    <h1>Music lives in<br><em>your history.</em></h1>
+    <p>Rate albums and songs, write reviews, and build lists of everything you've ever loved or loathed.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Get started — it's free</button>
+      <button class="btn-ghost">Learn more →</button>
+    </div>
+  </section>
+
+  <!-- TRENDING -->
+  <section class="trending-section">
+    <div class="section-divider">
+      <h2>Trending this week</h2>
+      <div class="line"></div>
+      <span class="see-all">See all →</span>
+    </div>
+    <div class="album-grid" id="albumGrid"></div>
+  </section>
+
+  <!-- RECENT REVIEWS -->
+  <section class="reviews-section">
+    <div class="section-divider">
+      <h2>Recent reviews</h2>
+      <div class="line"></div>
+      <span class="see-all">See all →</span>
+    </div>
+    <div class="review-list" id="reviewList"></div>
+  </section>
+
+  <!-- LISTS -->
+  <section class="lists-section">
+    <div class="section-divider">
+      <h2>Popular lists</h2>
+      <div class="line"></div>
+      <span class="see-all">See all →</span>
+    </div>
+    <div class="list-grid" id="listGrid"></div>
+  </section>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-overlay" id="authOverlay">
+    <div class="modal" style="max-width:380px">
+      <h3 id="authTitle">Welcome back</h3>
+      <div style="margin-bottom:1rem">
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none;margin-bottom:0.75rem" onkeydown="if(event.key==='Enter')submitAuth()" />
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Password</label>
+        <input id="authPassword" type="password" placeholder="••••••••" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none" onkeydown="if(event.key==='Enter')submitAuth()" />
+      </div>
+      <div id="usernameField" style="display:none;margin-bottom:1rem">
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Screen name</label>
+        <input id="authUsername" type="text" placeholder="e.g. vinyl_moth" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none" onkeydown="if(event.key==='Enter')submitAuth()" />
+      </div>
+      <p id="authError" style="font-size:0.8rem;color:var(--danger);min-height:1.2em;margin-bottom:0.75rem"></p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAuthModal()">Cancel</button>
+        <button class="btn-primary" id="authSubmitBtn" onclick="submitAuth()">Sign in</button>
+      </div>
+      <p id="authToggleText" style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:1rem"></p>
+    </div>
+  </div>
+
+  <!-- RATE MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Rate & review</h3>
+      <div class="modal-stars" id="modalStars">
+        <span class="modal-star" data-i="1">&#9733;</span>
+        <span class="modal-star" data-i="2">&#9733;</span>
+        <span class="modal-star" data-i="3">&#9733;</span>
+        <span class="modal-star" data-i="4">&#9733;</span>
+        <span class="modal-star" data-i="5">&#9733;</span>
+      </div>
+      <textarea placeholder="Write a review... (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="closeModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers. Not affiliated with Spotify or any rights holders.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    let currentUser = null;
+    let currentUsername = null;
+
+    async function initAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+      if (currentUser) {
+        await savePendingUsername(currentUser.id);
+        await loadUsername(currentUser.id);
+      }
+      updateNav();
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        currentUser = session?.user ?? null;
+        if (currentUser) {
+          await savePendingUsername(currentUser.id);
+          await loadUsername(currentUser.id);
+        } else {
+          currentUsername = null;
+        }
+        updateNav();
+      });
+    }
+
+    let _savingUsername = false;
+    async function savePendingUsername(userId) {
+      const pending = localStorage.getItem('pendingUsername');
+      if (!pending || _savingUsername) return;
+      _savingUsername = true;
+      const { data: existing } = await sb.from('profiles').select('id').eq('id', userId).single();
+      if (existing) {
+        localStorage.removeItem('pendingUsername');
+        _savingUsername = false;
+        return;
+      }
+      const { error } = await sb.from('profiles').insert({ id: userId, username: pending });
+      if (!error) localStorage.removeItem('pendingUsername');
+      _savingUsername = false;
+    }
+
+    async function loadUsername(userId) {
+      const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+      currentUsername = data?.username ?? null;
+    }
+
+    function updateNav() {
+      const btn = document.getElementById('authBtn');
+      const userInfo = document.getElementById('userInfo');
+      if (currentUser) {
+        btn.style.display = 'none';
+        userInfo.style.display = 'flex';
+        document.getElementById('userEmail').textContent = currentUsername || currentUser.email.split('@')[0];
+      } else {
+        btn.style.display = 'block';
+        userInfo.style.display = 'none';
+      }
+    }
+
+    let authMode = 'signin';
+
+    function openAuthModal(mode = 'signin') {
+      authMode = mode;
+      document.getElementById('authOverlay').classList.add('open');
+      document.getElementById('authError').textContent = '';
+      document.getElementById('authError').style.color = 'var(--danger)';
+      document.getElementById('authEmail').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authUsername').value = '';
+      renderAuthModal();
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authOverlay').classList.remove('open');
+    }
+
+    function renderAuthModal() {
+      document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Welcome back' : 'Create account';
+      document.getElementById('authSubmitBtn').textContent = authMode === 'signin' ? 'Sign in' : 'Sign up';
+      document.getElementById('usernameField').style.display = authMode === 'signup' ? 'block' : 'none';
+      document.getElementById('authToggleText').innerHTML = authMode === 'signin'
+        ? 'No account? <span style="color:var(--accent);cursor:pointer" onclick="switchAuthMode(\'signup\')">Sign up</span>'
+        : 'Already have one? <span style="color:var(--accent);cursor:pointer" onclick="switchAuthMode(\'signin\')">Sign in</span>';
+    }
+
+    function switchAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('authError').textContent = '';
+      renderAuthModal();
+    }
+
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const username = document.getElementById('authUsername').value.trim();
+      const errEl = document.getElementById('authError');
+      const btn = document.getElementById('authSubmitBtn');
+
+      if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+      if (authMode === 'signup' && !username) { errEl.textContent = 'Please choose a screen name.'; return; }
+      if (authMode === 'signup' && username.length < 3) { errEl.textContent = 'Screen name must be at least 3 characters.'; return; }
+
+      btn.textContent = 'Please wait...';
+      btn.disabled = true;
+
+      if (authMode === 'signin') {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        btn.disabled = false;
+        renderAuthModal();
+        if (error) errEl.textContent = error.message;
+        else closeAuthModal();
+      } else {
+        const { error } = await sb.auth.signUp({ email, password });
+        if (error) {
+          btn.disabled = false;
+          renderAuthModal();
+          errEl.textContent = error.message;
+          return;
+        }
+        localStorage.setItem('pendingUsername', username);
+        btn.disabled = false;
+        closeAuthModal();
+        errEl.style.color = 'var(--accent)';
+        document.getElementById('authError').textContent = '';
+        showBanner('Account created! Check your email to confirm, then come back and sign in.');
+      }
+    }
+
+    async function signOut() {
+      await sb.auth.signOut();
+      currentUsername = null;
+    }
+
+    function showBanner(msg) {
+      let b = document.getElementById('siteBanner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'siteBanner';
+        b.style = 'position:fixed;top:0;left:0;right:0;background:var(--accent);color:#0d0d0f;text-align:center;font-size:0.82rem;letter-spacing:0.04em;padding:0.6rem 1rem;z-index:999;font-weight:500';
+        document.body.prepend(b);
+      }
+      b.textContent = msg;
+      setTimeout(() => b.remove(), 6000);
+    }
+
+    const colors = ['#1a1a2e','#16213e','#1f2a38','#1e1a2e','#2a1f1f','#1a2a1a','#2a2218','#1f1f2a'];
+
+    // Spotify album IDs — these are the real IDs for each album
+    const albums = [
+      { spotifyId: '4SZko61aMnmgvNhfhgTuD3', title: 'Graduation',           artist: 'Kanye West',         color: '#1a1a2e' },
+      { spotifyId: '7ycBtnsMtyVbbwTfJwRjSP', title: 'To Pimp a Butterfly',  artist: 'Kendrick Lamar',     color: '#1f2a1a' },
+      { spotifyId: '3mH6qwIy9crq0I9YQbOuDf', title: 'Blonde',               artist: 'Frank Ocean',        color: '#2a1a1a' },
+      { spotifyId: '4LH4d3cOWNNsVw41Gqt2kv', title: 'Funeral',              artist: 'Arcade Fire',        color: '#1a2a2a' },
+      { spotifyId: '6UcNnMGniYl5RObNbfesiY', title: 'Fetch the Bolt Cutters',artist: 'Fiona Apple',       color: '#2a2a1a' },
+      { spotifyId: '6dVIqQ8qmQ5GBnJ9shOYGE', title: 'OK Computer',          artist: 'Radiohead',          color: '#1e1e2e' },
+      { spotifyId: '3xybjP7r2VsWzwvDQipdM0', title: 'Coloring Book',        artist: 'Chance the Rapper',  color: '#1a2218' },
+      { spotifyId: '2dEe4U9SnFMAdxAQHxYFLd', title: 'Illinois',             artist: 'Sufjan Stevens',     color: '#221a2a' },
+    ];
+
+    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+
+    async function getSpotifyToken() {
+      try {
+        const res = await fetch(WORKER_URL);
+        const data = await res.json();
+        return data.access_token;
+      } catch { return null; }
+    }
+
+    async function loadAlbumCovers() {
+      const token = await getSpotifyToken();
+      if (!token) return;
+
+      const ids = albums.map(a => a.spotifyId).join(',');
+      try {
+        const res = await fetch(`https://api.spotify.com/v1/albums?ids=${ids}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        data.albums.forEach((album, i) => {
+          if (!album) return;
+          albums[i].cover = album.images?.[1]?.url || album.images?.[0]?.url;
+          albums[i].title = album.name;
+          albums[i].artist = album.artists.map(a => a.name).join(', ');
+          const card = document.querySelector(`[data-spotify-id="${album.id}"]`);
+          if (card && albums[i].cover) {
+            const ph = card.querySelector('.ph');
+            const art = card.querySelector('.album-art');
+            if (ph) ph.style.display = 'none';
+            art.style.background = 'none';
+            art.insertAdjacentHTML('afterbegin', `<img src="${albums[i].cover}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />`);
+          }
+        });
+      } catch (e) { console.error('Spotify fetch failed', e); }
+    }
+
+    const reviews = [
+      { album: 'In Rainbows', artist: 'Radiohead', rating: 5, user: 'mxwll', text: 'A masterwork of restraint and longing. Every track feels like it was pulled from a dream you almost remember. Thom Yorke at his most achingly human.' },
+      { album: 'Blonde', artist: 'Frank Ocean', rating: 5, user: 'celestine_r', text: 'The album equivalent of lying on your bedroom floor at 2am thinking about someone you used to know. Untouchable.' },
+      { album: 'Funeral', artist: 'Arcade Fire', rating: 4, user: 'jfk_records', text: 'Rare that an album captures an entire feeling this precisely. Neighborhood #1 alone is worth five stars.' },
+    ];
+
+    const lists = [
+      { title: 'Albums that feel like 3am', user: 'mxwll', count: 24 },
+      { title: 'Essential jazz for rock fans', user: 'vinyl_moth', count: 16 },
+      { title: 'Perfect debut albums only', user: 'celestine_r', count: 31 },
+      { title: 'Songs that destroy me every time', user: 'jfk_records', count: 47 },
+    ];
+
+    function starsHtml(n, size = 11) {
+      let s = '';
+      for (let i = 1; i <= 5; i++) {
+        s += `<span class="star${i > n ? ' empty' : ''}" style="font-size:${size}px">&#9733;</span>`;
+      }
+      return s;
+    }
+
+    function openModal(title) {
+      document.getElementById('modalTitle').textContent = 'Rate — ' + title;
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    // render albums
+    const grid = document.getElementById('albumGrid');
+    albums.forEach((a, i) => {
+      const link = `album.html?id=${a.spotifyId}`;
+      const cardContent = `
+        <div class="album-art" style="background:${a.color};position:relative">
+          <div class="ph">${a.title.slice(0,2).toUpperCase()}</div>
+          <div class="overlay">
+            <span class="overlay-btn">View album</span>
+          </div>
+          <div class="album-rank">${i + 1}</div>
+        </div>
+        <div class="album-title">${a.title}</div>
+        <div class="album-artist">${a.artist}</div>`;
+      grid.innerHTML += `<a href="${link}" class="album-card" data-spotify-id="${a.spotifyId}">${cardContent}</a>`;
+    });
+
+    loadAlbumCovers();
+
+    // render reviews
+    const rl = document.getElementById('reviewList');
+    reviews.forEach(r => {
+      rl.innerHTML += `
+        <div class="review-item">
+          <div class="review-thumb" style="background:#1c1c24">
+            <div class="ph">${r.album.slice(0,2).toUpperCase()}</div>
+          </div>
+          <div class="review-body">
+            <div class="review-header">
+              <span class="review-album">${r.album}</span>
+              <span class="review-artist">${r.artist}</span>
+            </div>
+            <div class="review-stars">${starsHtml(r.rating, 12)}</div>
+            <div class="review-text">${r.text}</div>
+            <div class="review-user">reviewed by <span>${r.user}</span></div>
+          </div>
+        </div>`;
+    });
+
+    // render lists
+    const lg = document.getElementById('listGrid');
+    lists.forEach(l => {
+      let covers = '';
+      for (let i = 0; i < 4; i++) {
+        covers += `<div class="list-cover" style="background:${colors[i * 2]};"><div class="ph"></div></div>`;
+      }
+      lg.innerHTML += `
+        <div class="list-card">
+          <div class="list-covers">${covers}</div>
+          <div class="list-title">${l.title}</div>
+          <div class="list-meta"><span>${l.user}</span> &nbsp;·&nbsp; ${l.count} entries</div>
+        </div>`;
+    });
+
+    // star interaction in modal
+    const modalStars = document.querySelectorAll('.modal-star');
+    let selectedRating = 0;
+
+    modalStars.forEach(star => {
+      star.addEventListener('mouseover', () => {
+        const i = +star.dataset.i;
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= i));
+      });
+      star.addEventListener('mouseout', () => {
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= selectedRating));
+      });
+      star.addEventListener('click', () => {
+        selectedRating = +star.dataset.i;
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= selectedRating));
+      });
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('authOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeAuthModal();
+    });
+
+    initAuth();
+  </script>
+</body>
+</html>
