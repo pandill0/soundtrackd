@@ -636,13 +636,20 @@
       });
     }
 
+    let _savingUsername = false;
     async function savePendingUsername(userId) {
       const pending = localStorage.getItem('pendingUsername');
-      if (!pending) return;
+      if (!pending || _savingUsername) return;
+      _savingUsername = true;
       const { data: existing } = await sb.from('profiles').select('id').eq('id', userId).single();
-      if (existing) { localStorage.removeItem('pendingUsername'); return; }
+      if (existing) {
+        localStorage.removeItem('pendingUsername');
+        _savingUsername = false;
+        return;
+      }
       const { error } = await sb.from('profiles').insert({ id: userId, username: pending });
       if (!error) localStorage.removeItem('pendingUsername');
+      _savingUsername = false;
     }
 
     async function loadUsername(userId) {
