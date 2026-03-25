@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Soundtrackd</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0d0d0f;
-      --surface: #141416;
-      --surface2: #1c1c20;
+      --bg: #0a0f0b;
+      --surface: #0f1510;
+      --surface2: #161e17;
       --border: rgba(255,255,255,0.07);
-      --text: #e8e6e1;
-      --muted: #6b6b72;
-      --accent: #c8a96e;
+      --text: #e2e8e3;
+      --muted: #5a6b5c;
+      --accent: #4a9e6b;
       --accent2: #7c6fcd;
       --danger: #e05c5c;
       --star: #c8a96e;
@@ -24,26 +24,36 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-weight: 300;
       min-height: 100vh;
       line-height: 1.6;
+    }
+
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
     }
 
     a { color: inherit; text-decoration: none; }
 
     /* NAV */
     nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.25rem 2.5rem;
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      background: rgba(13,13,15,0.92);
+      background: rgba(10,15,11,0.92);
       backdrop-filter: blur(12px);
       z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .logo {
@@ -69,7 +79,7 @@
     .nav-right { display: flex; align-items: center; gap: 1rem; }
 
     .btn-signin {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 0.8rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -102,7 +112,7 @@
       border: none;
       outline: none;
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 0.85rem;
       width: 100%;
     }
@@ -113,7 +123,7 @@
 
     /* HERO */
     .hero {
-      padding: 5rem 2.5rem 3rem;
+      padding: 5rem 0 3rem;
       max-width: 680px;
     }
 
@@ -146,7 +156,7 @@
     .hero-actions { display: flex; gap: 1rem; align-items: center; }
 
     .btn-primary {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 0.85rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -178,7 +188,7 @@
       display: flex;
       align-items: center;
       gap: 1.5rem;
-      padding: 0 2.5rem;
+      padding: 0;
       margin-bottom: 2rem;
     }
 
@@ -209,7 +219,7 @@
     .section-divider .see-all:hover { color: var(--accent); }
 
     /* TRENDING GRID */
-    .trending-section { padding: 0 2.5rem 3rem; }
+    .trending-section { padding: 0 0 3rem; }
 
     .album-grid {
       display: grid;
@@ -288,7 +298,7 @@
     .star.empty { color: var(--surface2); }
 
     /* RECENT REVIEWS */
-    .reviews-section { padding: 0 2.5rem 3rem; }
+    .reviews-section { padding: 0 0 3rem; }
 
     .review-list { display: flex; flex-direction: column; gap: 0; }
 
@@ -351,7 +361,7 @@
     .review-user span { color: var(--accent2); }
 
     /* LISTS */
-    .lists-section { padding: 0 2.5rem 3rem; }
+    .lists-section { padding: 0 0 3rem; }
 
     .list-grid {
       display: grid;
@@ -443,7 +453,7 @@
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 0.875rem;
       font-weight: 300;
       padding: 0.75rem 1rem;
@@ -459,7 +469,7 @@
     .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
 
     .btn-cancel {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 0.8rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -476,12 +486,22 @@
     /* FOOTER */
     footer {
       border-top: 1px solid var(--border);
-      padding: 1.5rem 2.5rem;
+      padding: 1.5rem 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 0.75rem;
       color: var(--muted);
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .footer-logo {
@@ -517,6 +537,7 @@
     </div>
   </nav>
 
+  <div class="page-wrap">
   <!-- HERO -->
   <section class="hero">
     <p class="hero-eyebrow">Track what you listen to</p>
@@ -600,9 +621,12 @@
     </div>
   </div>
 
+  </div>
   <footer>
-    <div class="footer-logo">Soundtrackd</div>
-    <span>A place for music lovers. Not affiliated with Spotify or any rights holders.</span>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers. Not affiliated with Spotify or any rights holders.</span>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
