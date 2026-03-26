@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Album — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0f0b; --surface: #0f1510; --surface2: #161e17; --border: rgba(255,255,255,0.07); --text: #e2e8e3; --muted: #5a6b5c; --accent: #4a9e6b; --accent2: #7c6fcd; --star: #c8a96e; --danger: #e05c5c; }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,15,11,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .btn-nav { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
+    /* LOADING / ERROR */
+    .state-msg { padding: 6rem 0; text-align: center; color: var(--muted); font-size: 0.9rem; }
+    .spinner { width: 28px; height: 28px; border: 2px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ALBUM HERO */
+    .album-hero { display: flex; gap: 2.5rem; padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .album-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .album-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .album-meta { flex: 1; min-width: 0; }
+    .album-type { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .album-title { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.4rem; }
+    .album-artist { font-size: 1rem; color: var(--accent); margin-bottom: 1rem; font-weight: 500; }
+    .album-details { font-size: 0.8rem; color: var(--muted); display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .album-details span { display: flex; align-items: center; gap: 5px; }
+
+    .community-rating { display: flex; align-items: stretch; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); }
+    .avg-left { display: flex; flex-direction: column; justify-content: center; min-width: 70px; }
+    .avg-num { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--star); line-height: 1; }
+    .avg-label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+    .avg-stars { display: flex; gap: 3px; margin-top: 4px; }
+    .star { color: var(--star); font-size: 14px; }
+    .star.empty { color: var(--surface2); }
+    .rating-count { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .rating-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+    .rating-chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 0; }
+    .chart-bars-wrap { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+    .chart-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+    .chart-bar-v { width: 100%; background: var(--star); opacity: 0.7; border-radius: 2px 2px 0 0; height: 0%; transition: height 0.6s cubic-bezier(0.4,0,0.2,1); min-height: 2px; }
+    .chart-bar-v.active { opacity: 1; }
+    .chart-labels { display: flex; gap: 3px; margin-top: 4px; }
+    .chart-label-v { flex: 1; text-align: center; font-size: 9px; color: var(--muted); }
+
+    .rate-row { display: flex; gap: 0.75rem; align-items: center; }
+    .btn-rate { font-family: 'Nunito', sans-serif; font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.6rem 1.5rem; background: var(--accent); color: #0a0f0b; border: none; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+    .btn-rate:hover { opacity: 0.85; }
+    .btn-ghost { font-size: 0.82rem; color: var(--muted); background: transparent; border: 1px solid var(--border); padding: 0.6rem 1.25rem; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+    .section-divider { display: flex; align-items: center; gap: 1.5rem; margin: 2.5rem 0 1.5rem; }
+    .section-divider h2 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 400; white-space: nowrap; }
+    .section-divider .line { flex: 1; height: 1px; background: var(--border); }
+
+    /* TRACKLIST */
+    .tracklist { display: flex; flex-direction: column; }
+    .track { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; border-radius: 2px; }
+    .track:hover { background: var(--surface); }
+    .track-num { font-size: 0.75rem; color: var(--muted); width: 22px; text-align: right; flex-shrink: 0; }
+    .track-name { flex: 1; font-size: 0.9rem; font-weight: 400; }
+    .track-feat { font-size: 0.78rem; color: var(--muted); }
+    .track-dur { font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+
+    /* REVIEWS */
+    .review-list { display: flex; flex-direction: column; }
+    .review-item { display: flex; gap: 1rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+    .review-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--accent); flex-shrink: 0; font-weight: 500; }
+    .review-body { flex: 1; }
+    .review-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 4px; flex-wrap: wrap; }
+    .review-user { font-size: 0.85rem; font-weight: 500; color: var(--accent); }
+    .review-stars { display: flex; gap: 2px; }
+    .review-text { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    .review-date { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+    .empty-reviews { padding: 2.5rem 0; color: var(--muted); font-size: 0.88rem; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); padding: 2rem; width: 90%; max-width: 420px; }
+    .modal h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 400; margin-bottom: 0.25rem; }
+    .modal-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.25rem; }
+    .modal-stars { display: flex; gap: 4px; margin-bottom: 0.5rem; cursor: pointer; user-select: none; }
+    .modal-star { position: relative; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; }
+    .modal-star svg { width: 34px; height: 34px; }
+    .modal-star .star-bg { fill: var(--surface2); }
+    .modal-star .star-fill { fill: var(--star); clip-path: inset(0 100% 0 0); transition: clip-path 0.1s; }
+    .modal-rating-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.25rem; min-height: 1.2em; }
+    .modal textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.875rem; font-weight: 300; padding: 0.75rem 1rem; resize: none; height: 100px; outline: none; margin-bottom: 1.25rem; }
+    .modal textarea:focus { border-color: rgba(74,158,107,0.4); }
+    .modal textarea::placeholder { color: var(--muted); }
+    .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+    .btn-cancel { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.6rem 1.25rem; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+    .modal-error { font-size: 0.78rem; color: var(--danger); min-height: 1.2em; margin-bottom: 0.5rem; }
+
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 4rem; font-size: 0.75rem; color: var(--muted); }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Sound<span>trackd</span></a>
+      <div class="nav-right">
+        <a href="index.html" style="font-size:0.82rem;color:var(--muted);letter-spacing:0.03em">← Back</a>
+        <button class="btn-nav" id="authBtn" onclick="window.location.href='index.html'">Sign in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent)" id="navUsername"></a>
+          <button class="btn-nav" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- LOADING STATE -->
+    <div id="loadingState" class="state-msg">
+      <div class="spinner"></div>
+      Loading album...
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="errorState" class="state-msg" style="display:none">
+      Couldn't load this album. <a href="index.html" style="color:var(--accent)">Go home</a>
+    </div>
+
+    <!-- ALBUM CONTENT (hidden until loaded) -->
+    <div id="albumContent" style="display:none">
+
+      <div class="album-hero">
+        <div class="album-cover"><img id="coverImg" src="" alt="" /></div>
+        <div class="album-meta">
+          <div class="album-type" id="albumType">Album</div>
+          <div class="album-title" id="albumTitle"></div>
+          <div class="album-artist" id="albumArtist"></div>
+          <div class="album-details">
+            <span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="releaseDate"></span>
+            </span>
+            <span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <span id="albumLabel"></span>
+            </span>
+            <span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="albumRuntime"></span>
+            </span>
+            <span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span id="trackCount"></span>
+            </span>
+          </div>
+
+          <div class="community-rating">
+            <div class="avg-left">
+              <div class="avg-num" id="avgNum">—</div>
+              <div class="avg-stars" id="avgStars"></div>
+              <div class="rating-count" id="ratingCount">No ratings yet</div>
+              <div class="avg-label" style="margin-top:4px">Community</div>
+            </div>
+            <div class="rating-divider"></div>
+            <div class="rating-chart" id="ratingChart">
+              <div class="chart-bars-wrap" id="chartBarsWrap">
+                <div class="chart-col"><div class="chart-bar-v" id="bar05"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar1"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar15"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar2"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar25"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar3"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar35"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar4"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar45"></div></div>
+                <div class="chart-col"><div class="chart-bar-v" id="bar5"></div></div>
+              </div>
+              <div class="chart-labels">
+                <div class="chart-label-v">½</div>
+                <div class="chart-label-v">1</div>
+                <div class="chart-label-v">1½</div>
+                <div class="chart-label-v">2</div>
+                <div class="chart-label-v">2½</div>
+                <div class="chart-label-v">3</div>
+                <div class="chart-label-v">3½</div>
+                <div class="chart-label-v">4</div>
+                <div class="chart-label-v">4½</div>
+                <div class="chart-label-v">5</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rate-row">
+            <button class="btn-rate" onclick="openRateModal()">Rate this album</button>
+            <button class="btn-ghost" id="myRatingBtn" style="display:none"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"><h2>Tracklist</h2><div class="line"></div></div>
+      <div class="tracklist" id="tracklist"></div>
+
+      <div class="section-divider"><h2>Reviews</h2><div class="line"></div></div>
+      <div class="review-list" id="reviewList">
+        <div class="empty-reviews" id="emptyReviews">No reviews yet — be the first.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RATE MODAL -->
+  <div class="modal-overlay" id="rateOverlay">
+    <div class="modal">
+      <h3 id="modalAlbumTitle"></h3>
+      <div class="modal-sub" id="modalAlbumSub"></div>
+      <div class="modal-stars" id="modalStars">
+        <span class="modal-star" data-i="1"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="2"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="3"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="4"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="5"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+      </div>
+      <div class="modal-rating-label" id="modalRatingLabel">Move your mouse over the stars</div>
+      <textarea id="reviewText" placeholder="Write a review... (optional)"></textarea>
+      <div class="modal-error" id="rateError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeRateModal()">Cancel</button>
+        <button class="btn-rate" id="saveRateBtn" onclick="saveRating()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    // ── read album ID from URL ──────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const ALBUM_ID = params.get('id');
+
+    let currentUser = null;
+    let selectedRating = 0;
+    let myExistingRating = null;
+    let albumData = null;
+
+    // ── helpers ────────────────────────────────────────────
+    function starsHtml(n, size = 13) {
+      let s = '';
+      for (let i = 1; i <= 5; i++) {
+        if (n >= i) {
+          s += `<span class="star" style="font-size:${size}px">&#9733;</span>`;
+        } else if (n >= i - 0.5) {
+          // half star using clip
+          s += `<span style="position:relative;display:inline-block;font-size:${size}px">` +
+               `<span class="star empty">&#9733;</span>` +
+               `<span class="star" style="position:absolute;left:0;top:0;width:50%;overflow:hidden">&#9733;</span>` +
+               `</span>`;
+        } else {
+          s += `<span class="star empty" style="font-size:${size}px">&#9733;</span>`;
+        }
+      }
+      return s;
+    }
+
+    function msToMin(ms) {
+      const s = Math.floor(ms / 1000);
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    function totalRuntime(tracks) {
+      const ms = tracks.reduce((sum, t) => sum + t.duration_ms, 0);
+      const mins = Math.round(ms / 60000);
+      return `${mins} min`;
+    }
+
+    // ── Spotify token via our serverless function ──────────
+    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+
+    async function getSpotifyToken() {
+      try {
+        const res = await fetch(WORKER_URL);
+        const data = await res.json();
+        return data.access_token;
+      } catch {
+        return null;
+      }
+    }
+
+    // ── fetch album from Spotify ───────────────────────────
+    async function fetchAlbum(id, token) {
+      const res = await fetch(`https://api.spotify.com/v1/albums/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Album not found');
+      return res.json();
+    }
+
+    // ── render album data into the page ───────────────────
+    function renderAlbum(album) {
+      document.title = `${album.name} — ${album.artists[0].name} — Soundtrackd`;
+
+      document.getElementById('albumType').textContent = album.album_type.charAt(0).toUpperCase() + album.album_type.slice(1);
+      document.getElementById('albumTitle').textContent = album.name;
+      document.getElementById('albumArtist').textContent = album.artists.map(a => a.name).join(', ');
+      document.getElementById('releaseDate').textContent = album.release_date.slice(0, 4);
+      document.getElementById('albumLabel').textContent = album.label || '—';
+      document.getElementById('trackCount').textContent = `${album.total_tracks} tracks`;
+      document.getElementById('releaseDate').textContent = new Date(album.release_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+      const tracks = album.tracks.items;
+      document.getElementById('albumRuntime').textContent = totalRuntime(tracks);
+
+      const cover = album.images?.[0]?.url;
+      if (cover) document.getElementById('coverImg').src = cover;
+
+      // tracklist
+      const tl = document.getElementById('tracklist');
+      tracks.forEach((t, i) => {
+        const features = t.artists.slice(1).map(a => a.name).join(', ');
+        tl.innerHTML += `
+          <div class="track">
+            <span class="track-num">${i + 1}</span>
+            <span class="track-name">
+              ${t.name}
+              ${features ? `<span class="track-feat">ft. ${features}</span>` : ''}
+            </span>
+            <span class="track-dur">${msToMin(t.duration_ms)}</span>
+          </div>`;
+      });
+
+      // modal header
+      document.getElementById('modalAlbumTitle').textContent = album.name;
+      document.getElementById('modalAlbumSub').textContent = `${album.artists[0].name} · ${album.release_date.slice(0, 4)}`;
+    }
+
+    // ── fallback: render static data (for before Spotify is wired) ──
+    function renderFallback(id) {
+      // Hardcoded fallback for Graduation so the page still works
+      if (id === '4SZko61aMnmgvNhfhgTuD3' || id === 'graduation') {
+        document.title = 'Graduation — Kanye West — Soundtrackd';
+        document.getElementById('albumTitle').textContent = 'Graduation';
+        document.getElementById('albumArtist').textContent = 'Kanye West';
+        document.getElementById('albumType').textContent = 'Album';
+        document.getElementById('releaseDate').textContent = 'September 11, 2007';
+        document.getElementById('albumLabel').textContent = 'Def Jam / Roc-A-Fella';
+        document.getElementById('albumRuntime').textContent = '51 min';
+        document.getElementById('trackCount').textContent = '13 tracks';
+        document.getElementById('modalAlbumTitle').textContent = 'Graduation';
+        document.getElementById('modalAlbumSub').textContent = 'Kanye West · 2007';
+        document.getElementById('coverImg').style.display = 'none';
+        document.getElementById('coverImg').parentElement.style.background = 'linear-gradient(135deg,#1a1060 0%,#e8a020 50%,#c0282c 100%)';
+
+        const tracks = [
+          ['Good Morning','','3:15'],['Champion','','2:47'],['Stronger','','5:11'],
+          ['I Wonder','','4:03'],['Good Life','T-Pain','3:28'],["Can't Tell Me Nothing",'','4:32'],
+          ['Barry Bonds','Lil Wayne','3:18'],['Drunk and Hot Girls','Mos Def','4:46'],
+          ['Flashing Lights','Dwele','4:00'],['Everything I Am','DJ Premier','3:57'],
+          ['The Glory','','3:35'],['Homecoming','Chris Martin','3:27'],['Big Brother','','4:05'],
+        ];
+        const tl = document.getElementById('tracklist');
+        tracks.forEach(([name, feat, dur], i) => {
+          tl.innerHTML += `<div class="track"><span class="track-num">${i+1}</span><span class="track-name">${name}${feat?` <span class="track-feat">ft. ${feat}</span>`:''}</span><span class="track-dur">${dur}</span></div>`;
+        });
+      } else {
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('loadingState').style.display = 'none';
+        return;
+      }
+    }
+
+    // ── ratings & reviews ──────────────────────────────────
+    async function loadRatings() {
+      const { data } = await sb.from('ratings').select('rating').eq('album_id', ALBUM_ID);
+      if (!data || data.length === 0) return;
+
+      const total = data.length;
+      const avg = data.reduce((sum, r) => sum + parseFloat(r.rating), 0) / total;
+
+      document.getElementById('avgNum').textContent = avg.toFixed(1);
+      document.getElementById('avgStars').innerHTML = starsHtml(Math.round(avg * 2) / 2);
+      document.getElementById('ratingCount').textContent = `${total} rating${total !== 1 ? 's' : ''}`;
+
+      // Count each half-star bucket
+      const buckets = { 0.5:0, 1:0, 1.5:0, 2:0, 2.5:0, 3:0, 3.5:0, 4:0, 4.5:0, 5:0 };
+      data.forEach(r => {
+        const v = Math.round(parseFloat(r.rating) * 2) / 2;
+        if (buckets[v] !== undefined) buckets[v]++;
+      });
+      const max = Math.max(...Object.values(buckets), 1);
+
+      // Animate vertical bars in after short delay
+      setTimeout(() => {
+        Object.entries(buckets).forEach(([val, count]) => {
+          const key = val.toString().replace('.', '');
+          const el = document.getElementById('bar' + key);
+          if (el) {
+            const pct = Math.round((count / max) * 100);
+            el.style.height = Math.max(pct, count > 0 ? 4 : 0) + '%';
+            if (count === Math.max(...Object.values(buckets))) el.classList.add('active');
+          }
+        });
+      }, 150);
+    }
+
+    async function loadMyRating() {
+      const { data } = await sb.from('ratings').select('rating, review').eq('album_id', ALBUM_ID).eq('user_id', currentUser.id).single();
+      if (!data) return;
+      myExistingRating = data;
+      selectedRating = data.rating;
+      const btn = document.getElementById('myRatingBtn');
+      btn.style.display = 'block';
+      btn.textContent = `Your rating: ${data.rating}/5 — Edit`;
+    }
+
+    async function loadReviews() {
+      const { data } = await sb.from('ratings')
+        .select('rating, review, user_id, created_at, profiles(username)')
+        .eq('album_id', ALBUM_ID)
+        .not('review', 'is', null)
+        .order('created_at', { ascending: false });
+
+      const list = document.getElementById('reviewList');
+      const empty = document.getElementById('emptyReviews');
+      if (!data || data.length === 0) { empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      data.forEach(r => {
+        const username = r.profiles?.username || 'anonymous';
+        const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        list.innerHTML += `
+          <div class="review-item">
+            <div class="review-avatar">${username.charAt(0).toUpperCase()}</div>
+            <div class="review-body">
+              <div class="review-header">
+                <span class="review-user">${username}</span>
+                <div class="review-stars">${starsHtml(r.rating, 11)}</div>
+              </div>
+              <div class="review-text">${r.review}</div>
+              <div class="review-date">${date}</div>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ── modal ──────────────────────────────────────────────
+    function openRateModal() {
+      if (!currentUser) { window.location.href = 'index.html'; return; }
+      selectedRating = myExistingRating?.rating || 0;
+      document.getElementById('reviewText').value = myExistingRating?.review || '';
+      document.getElementById('rateError').textContent = '';
+      renderModalStars();
+      document.getElementById('rateOverlay').classList.add('open');
+    }
+
+    function closeRateModal() { document.getElementById('rateOverlay').classList.remove('open'); }
+
+
+
+    async function saveRating() {
+      if (!selectedRating) { document.getElementById('rateError').textContent = 'Please select a star rating.'; return; }
+      const btn = document.getElementById('saveRateBtn');
+      btn.textContent = 'Saving...'; btn.disabled = true;
+
+      // Grab album metadata from the page to store alongside rating
+      const albumName = document.getElementById('albumTitle')?.textContent || ALBUM_ID;
+      const albumArtist = document.getElementById('albumArtist')?.textContent || '';
+      const albumCover = document.getElementById('coverImg')?.src || '';
+
+      const payload = {
+        album_id: ALBUM_ID, user_id: currentUser.id,
+        rating: selectedRating,
+        review: document.getElementById('reviewText').value.trim() || null,
+        album_name: albumName,
+        album_artist: albumArtist,
+        album_cover: albumCover || null,
+      };
+
+      const { error } = await sb.from('ratings').upsert(payload, { onConflict: 'album_id,user_id' });
+      btn.textContent = 'Save'; btn.disabled = false;
+
+      if (error) { document.getElementById('rateError').textContent = error.message; return; }
+      myExistingRating = payload;
+      document.getElementById('myRatingBtn').style.display = 'block';
+      document.getElementById('myRatingBtn').textContent = `Your rating: ${selectedRating}/5 — Edit`;
+      closeRateModal();
+      document.getElementById('reviewList').innerHTML = '';
+      document.getElementById('emptyReviews').style.display = 'block';
+      await loadRatings();
+      await loadReviews();
+    }
+
+    // Half-star interaction — mousemove detects left/right half
+    const modalStarsEl = document.getElementById('modalStars');
+
+    function getRatingFromEvent(e) {
+      const star = e.target.closest('.modal-star');
+      if (!star) return null;
+      const rect = star.getBoundingClientRect();
+      const half = (e.clientX - rect.left) < rect.width / 2;
+      const full = parseInt(star.dataset.i);
+      return half ? full - 0.5 : full;
+    }
+
+    function applyStarFill(rating) {
+      document.querySelectorAll('.modal-star').forEach((star, idx) => {
+        const starNum = idx + 1;
+        const fill = star.querySelector('.star-fill');
+        if (rating >= starNum) {
+          fill.style.clipPath = 'inset(0 0% 0 0)';
+        } else if (rating >= starNum - 0.5) {
+          fill.style.clipPath = 'inset(0 50% 0 0)';
+        } else {
+          fill.style.clipPath = 'inset(0 100% 0 0)';
+        }
+      });
+    }
+
+    function renderModalStars() { applyStarFill(selectedRating); }
+
+    const ratingLabels = {
+      0: 'Move your mouse over the stars',
+      0.5: '½ — painful', 1: '★ — bad', 1.5: '★½ — poor',
+      2: '★★ — ok', 2.5: '★★½ — mixed', 3: '★★★ — decent',
+      3.5: '★★★½ — good', 4: '★★★★ — great', 4.5: '★★★★½ — excellent',
+      5: '★★★★★ — masterpiece'
+    };
+
+    modalStarsEl.addEventListener('mousemove', e => {
+      const r = getRatingFromEvent(e);
+      if (r === null) return;
+      applyStarFill(r);
+      document.getElementById('modalRatingLabel').textContent = ratingLabels[r] || '';
+    });
+
+    modalStarsEl.addEventListener('mouseleave', () => {
+      renderModalStars();
+      document.getElementById('modalRatingLabel').textContent = selectedRating > 0 ? (ratingLabels[selectedRating] || '') : 'Move your mouse over the stars';
+    });
+
+    modalStarsEl.addEventListener('click', e => {
+      const r = getRatingFromEvent(e);
+      if (r === null) return;
+      selectedRating = r;
+      renderModalStars();
+      document.getElementById('modalRatingLabel').textContent = ratingLabels[r] || '';
+    });
+
+    document.getElementById('rateOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeRateModal(); });
+
+    // ── nav auth ───────────────────────────────────────────
+    async function initNav() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+      const btn = document.getElementById('authBtn');
+      const userInfo = document.getElementById('userInfo');
+      if (currentUser) {
+        btn.style.display = 'none';
+        userInfo.style.display = 'flex';
+        const { data: profile } = await sb.from('profiles').select('username').eq('id', currentUser.id).single();
+        document.getElementById('navUsername').textContent = profile?.username || currentUser.email.split('@')[0];
+      }
+    }
+
+    async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+    // ── main init ──────────────────────────────────────────
+    async function init() {
+      if (!ALBUM_ID) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        return;
+      }
+
+      await initNav();
+
+      // Try Spotify first, fall back to static data
+      const token = await getSpotifyToken();
+      if (token) {
+        try {
+          const album = await fetchAlbum(ALBUM_ID, token);
+          albumData = album;
+          renderAlbum(album);
+        } catch {
+          renderFallback(ALBUM_ID);
+        }
+      } else {
+        renderFallback(ALBUM_ID);
+      }
+
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('albumContent').style.display = 'block';
+
+      await loadRatings();
+      await loadReviews();
+      if (currentUser) await loadMyRating();
+    }
+
+    init();
+  </script>
+</body>
+</html>
