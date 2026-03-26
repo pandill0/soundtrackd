@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0f0b; --surface: #0f1510; --surface2: #161e17; --border: rgba(255,255,255,0.07); --text: #e2e8e3; --muted: #5a6b5c; --accent: #4a9e6b; --accent2: #7c6fcd; --star: #c8a96e; --danger: #e05c5c; }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,15,11,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1.5rem; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); flex-shrink: 0; }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; flex-shrink: 0; }
+    .btn-nav { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* BELL */
+    .bell-btn { position: relative; background: transparent; border: 1px solid var(--border); color: var(--muted); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .bell-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bell-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; display: none; }
+
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+
+    .profile-header { padding: 3rem 0 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 2rem; }
+    .avatar { width: 88px; height: 88px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--accent); flex-shrink: 0; border: 1px solid var(--border); overflow: hidden; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-info { flex: 1; min-width: 0; }
+    .username-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2px; flex-wrap: wrap; }
+    .profile-username { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; }
+
+    .edit-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; font-family: 'Nunito', sans-serif; }
+    .edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .follow-btn { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 18px; border: 1px solid var(--accent); background: var(--accent); color: #0a0f0b; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .follow-btn.following { background: transparent; color: var(--muted); border-color: var(--border); }
+    .follow-btn.following:hover { border-color: var(--danger); color: var(--danger); }
+    .follow-btn:hover { opacity: 0.85; }
+
+    .profile-pronouns { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    .profile-bio { font-size: 0.88rem; color: var(--muted); margin: 6px 0; max-width: 520px; line-height: 1.65; }
+    .profile-website { font-size: 0.8rem; color: var(--accent2); margin-top: 4px; }
+    .profile-website a:hover { text-decoration: underline; }
+    .profile-meta { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.03em; margin-top: 6px; }
+    .profile-stats { display: flex; gap: 2rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 400; color: var(--text); display: block; }
+    .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+    .not-logged-in { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 2rem; text-align: center; }
+    .not-logged-in p { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .btn-primary { font-family: 'Nunito', sans-serif; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.75rem 2rem; background: var(--accent); color: #0a0f0b; border: none; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .profile-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 1rem 1.25rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; margin-bottom: -1px; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover { color: var(--text); }
+    .profile-content { padding: 2rem 0; }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty-state p { font-size: 0.9rem; margin-top: 0.5rem; }
+    .empty-icon { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--surface2); margin-bottom: 1rem; }
+
+    /* REVIEW LIST */
+    .review-list { display: flex; flex-direction: column; }
+    .review-item { display: flex; gap: 1rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+    .review-thumb { width: 44px; height: 44px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .review-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .review-body { flex: 1; }
+    .review-album-name { font-size: 0.88rem; font-weight: 500; }
+    .review-artist-name { font-size: 0.78rem; color: var(--muted); }
+    .review-stars { display: flex; gap: 2px; margin: 3px 0; }
+    .star { color: var(--star); font-size: 11px; }
+    .star.empty { color: var(--surface2); }
+    .review-text-body { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .review-date { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+    /* NOTIFICATIONS PANEL */
+    .notif-panel { display: none; position: fixed; top: 64px; right: calc(50% - 430px + 2rem); width: 320px; background: var(--surface); border: 1px solid var(--border); z-index: 300; max-height: 420px; overflow-y: auto; }
+    .notif-panel.open { display: block; }
+    .notif-header { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+    .notif-clear { font-size: 0.7rem; color: var(--muted); cursor: pointer; transition: color 0.2s; }
+    .notif-clear:hover { color: var(--accent); }
+    .notif-item { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; display: flex; gap: 0.75rem; align-items: flex-start; }
+    .notif-item.unread { background: rgba(74,158,107,0.05); }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+    .notif-empty { padding: 2rem 1rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); padding: 2rem; width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 400; margin-bottom: 1.5rem; }
+    .field-group { margin-bottom: 1.25rem; }
+    .field-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .field-locked { font-size: 0.82rem; color: var(--muted); padding: 0.65rem 1rem; background: var(--bg); border: 1px solid var(--border); opacity: 0.6; }
+    .field-locked-note { font-size: 0.72rem; color: var(--muted); margin-top: 4px; opacity: 0.7; }
+    .modal input[type=text], .modal input[type=url], .modal textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.875rem; font-weight: 300; padding: 0.65rem 1rem; outline: none; transition: border-color 0.2s; }
+    .modal input:focus, .modal textarea:focus { border-color: rgba(74,158,107,0.4); }
+    .modal input::placeholder, .modal textarea::placeholder { color: var(--muted); }
+    .modal textarea { resize: none; height: 90px; }
+    .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-cancel { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.6rem 1.25rem; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+    .save-status { font-size: 0.78rem; min-height: 1.2em; margin-top: 0.5rem; text-align: right; }
+
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 0; font-size: 0.75rem; color: var(--muted); margin-top: 4rem; position: relative; z-index: 1; }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
+
+    @media (max-width: 640px) {
+      .page-wrap { padding: 0 1.25rem; }
+      .profile-header { flex-direction: column; gap: 1rem; padding: 2rem 0 1.5rem; }
+      .nav-inner { padding: 1rem 1.25rem; }
+      .notif-panel { right: 1rem; left: 1rem; width: auto; }
+    }
+
+    /* FAVORITES */
+    .fav-section { padding: 2rem 0 1.5rem; border-bottom: 1px solid var(--border); }
+    .fav-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+    .fav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .fav-slot {
+      aspect-ratio: 1; background: var(--surface2); border: 1px dashed rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+    }
+    .fav-slot:hover { border-color: var(--accent); }
+    .fav-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .fav-slot .fav-plus {
+      font-size: 1.4rem; color: rgba(255,255,255,0.15); transition: color 0.2s;
+      display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+    }
+    .fav-slot:hover .fav-plus { color: var(--accent); }
+    .fav-slot .fav-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s; padding: 6px; text-align: center;
+    }
+    .fav-slot:hover .fav-overlay { opacity: 1; }
+    .fav-overlay-title { font-size: 0.7rem; font-weight: 500; color: #fff; line-height: 1.3; }
+    .fav-overlay-remove { font-size: 0.65rem; color: var(--danger); margin-top: 4px; cursor: pointer; }
+
+    /* ALBUM PICKER MODAL */
+    .picker-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; align-items: center; justify-content: center; }
+    .picker-overlay.open { display: flex; }
+    .picker-modal { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; width: 90%; max-width: 480px; max-height: 80vh; display: flex; flex-direction: column; }
+    .picker-modal h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 400; margin-bottom: 1rem; }
+    .picker-search-wrap { display: flex; gap: 0; border: 1px solid var(--border); margin-bottom: 1rem; }
+    .picker-search-wrap input { flex: 1; background: var(--bg); border: none; outline: none; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.88rem; padding: 0.65rem 1rem; }
+    .picker-search-wrap input::placeholder { color: var(--muted); }
+    .picker-search-btn { background: var(--accent); border: none; color: #0a0f0b; padding: 0 1.25rem; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .picker-results { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .picker-result { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.5rem; cursor: pointer; transition: background 0.15s; border-radius: 2px; }
+    .picker-result:hover { background: var(--surface2); }
+    .picker-thumb { width: 40px; height: 40px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .picker-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .picker-name { font-size: 0.85rem; font-weight: 500; }
+    .picker-artist { font-size: 0.75rem; color: var(--muted); }
+    .picker-empty { padding: 2rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    .picker-close { float: right; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; margin-top: -4px; }
+
+    @keyframes pulse { 0%,100%{opacity:0.4}50%{opacity:0.8} }
+    .fav-skel { animation: pulse 1.5s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Sound<span>trackd</span></a>
+      <div class="nav-right">
+        <a href="index.html" style="font-size:0.82rem;color:var(--muted);letter-spacing:0.03em">← Home</a>
+        <button class="btn-nav" id="authBtn" onclick="window.location.href='index.html'">Log in</button>
+        <div id="loggedInNav" style="display:none;align-items:center;gap:0.75rem;">
+          <button class="bell-btn" id="bellBtn" onclick="toggleNotifs()" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="bell-badge" id="bellBadge"></span>
+          </button>
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent)" id="navUsername"></a>
+          <button class="btn-nav" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      Notifications
+      <span class="notif-clear" onclick="markAllRead()">Mark all read</span>
+    </div>
+    <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
+  </div>
+
+  <div class="page-wrap">
+
+    <div class="not-logged-in" id="notLoggedIn">
+      <div class="empty-icon">♪</div>
+      <p id="notLoggedInMsg">Sign in to view profiles.</p>
+      <a href="index.html"><button class="btn-primary">Go to homepage</button></a>
+    </div>
+
+    <div id="profileContent" style="display:none">
+      <div class="profile-header">
+        <div class="avatar" id="avatarEl"><span id="avatarInitial">?</span></div>
+        <div class="profile-info">
+          <div class="username-row">
+            <div class="profile-username" id="usernameEl">—</div>
+            <!-- own profile: edit btn | other profile: follow btn -->
+            <button class="edit-btn" id="editBtn" style="display:none" onclick="openEditModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+            <button class="follow-btn" id="followBtn" style="display:none" onclick="toggleFollow()">Follow</button>
+          </div>
+          <div class="profile-pronouns" id="pronounsEl" style="display:none"></div>
+          <div class="profile-bio" id="bioEl" style="display:none"></div>
+          <div class="profile-website" id="websiteEl" style="display:none"></div>
+          <div class="profile-meta" id="memberSinceEl">Member</div>
+          <div class="profile-stats">
+            <div class="stat"><span class="stat-num" id="statReviews">0</span><span class="stat-label">Reviews</span></div>
+            <div class="stat"><span class="stat-num" id="statLists">0</span><span class="stat-label">Lists</span></div>
+            <div class="stat"><span class="stat-num" id="statFollowers">0</span><span class="stat-label">Followers</span></div>
+            <div class="stat"><span class="stat-num" id="statFollowing">0</span><span class="stat-label">Following</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAVORITE ALBUMS -->
+      <div class="fav-section" id="favSection">
+        <div class="fav-label">Favorite albums</div>
+        <div class="fav-grid" id="favGrid">
+          <div class="fav-slot fav-skel"></div>
+          <div class="fav-slot fav-skel"></div>
+          <div class="fav-slot fav-skel"></div>
+          <div class="fav-slot fav-skel"></div>
+        </div>
+      </div>
+
+      <div class="profile-tabs">
+        <div class="tab active" onclick="switchTab('reviews', this)">Reviews</div>
+        <div class="tab" onclick="switchTab('lists', this)">Lists</div>
+      </div>
+
+      <div class="profile-content">
+        <div id="tabReviews">
+          <div class="empty-state" id="reviewsEmpty">
+            <div class="empty-icon">♪</div>
+            <p>No reviews yet.</p>
+          </div>
+          <div class="review-list" id="reviewsList"></div>
+        </div>
+        <div id="tabLists" style="display:none">
+          <div class="empty-state">
+            <div class="empty-icon">♪</div>
+            <p>No lists yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALBUM PICKER MODAL -->
+  <div class="picker-overlay" id="pickerOverlay">
+    <div class="picker-modal">
+      <button class="picker-close" onclick="closePicker()">✕</button>
+      <h3>Choose a favorite album</h3>
+      <div class="picker-search-wrap">
+        <input type="text" id="pickerInput" placeholder="Search albums..." onkeydown="if(event.key==='Enter')pickerSearch()" />
+        <button class="picker-search-btn" onclick="pickerSearch()">Search</button>
+      </div>
+      <div class="picker-results" id="pickerResults">
+        <div class="picker-empty">Search for an album above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL (own profile only) -->
+  <div class="modal-overlay" id="editOverlay">
+    <div class="modal">
+      <h3>Edit profile</h3>
+      <div class="field-group">
+        <div class="field-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Screen name
+        </div>
+        <div class="field-locked" id="lockedUsername"></div>
+        <div class="field-locked-note">Screen names cannot be changed after signup.</div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          Pronouns
+        </div>
+        <input type="text" id="editPronouns" placeholder="e.g. they/them" maxlength="40" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Bio
+        </div>
+        <textarea id="editBio" placeholder="Say something about yourself..." maxlength="280"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Profile picture URL
+        </div>
+        <input type="url" id="editAvatar" placeholder="https://..." />
+      </div>
+      <div class="field-group">
+        <div class="field-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Website
+        </div>
+        <input type="url" id="editWebsite" placeholder="https://yoursite.com" />
+      </div>
+      <div class="save-status" id="saveStatus"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-primary" id="saveBtn" onclick="saveProfile()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewUserId = urlParams.get('user'); // if set, viewing someone else
+
+    let currentUser = null;
+    let currentProfile = null;
+    let viewedUserId = null;
+    let isOwnProfile = false;
+    let isFollowing = false;
+
+    // ── INIT ──────────────────────────────────────────────
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+
+      // Determine whose profile to show
+      viewedUserId = viewUserId || currentUser?.id;
+
+      if (!viewedUserId) {
+        document.getElementById('notLoggedIn').style.display = 'flex';
+        return;
+      }
+
+      isOwnProfile = currentUser && viewedUserId === currentUser.id;
+
+      // Show nav elements
+      if (currentUser) {
+        document.getElementById('authBtn').style.display = 'none';
+        document.getElementById('loggedInNav').style.display = 'flex';
+        const { data: np } = await sb.from('profiles').select('username').eq('id', currentUser.id).single();
+        document.getElementById('navUsername').textContent = np?.username || currentUser.email.split('@')[0];
+        await loadNotifications();
+      }
+
+      // Load the viewed profile
+      const { data: profile } = await sb.from('profiles')
+        .select('id, username, bio, pronouns, avatar_url, website, created_at, favorite_albums')
+        .eq('id', viewedUserId)
+        .single();
+
+      if (!profile) {
+        document.getElementById('notLoggedInMsg').textContent = 'Profile not found.';
+        document.getElementById('notLoggedIn').style.display = 'flex';
+        return;
+      }
+
+      currentProfile = profile;
+      document.getElementById('profileContent').style.display = 'block';
+
+      renderProfile(profile);
+      await loadStats();
+      await loadReviews();
+      await loadFavorites();
+
+      // Show correct action button
+      if (isOwnProfile) {
+        document.getElementById('editBtn').style.display = 'flex';
+      } else if (currentUser) {
+        document.getElementById('followBtn').style.display = 'block';
+        await checkFollowStatus();
+      }
+    }
+
+    // ── RENDER PROFILE ─────────────────────────────────────
+    function renderProfile(profile) {
+      const username = profile.username || '—';
+      document.title = username + ' — Soundtrackd';
+      document.getElementById('usernameEl').textContent = username;
+
+      const joined = profile.created_at
+        ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : '';
+      document.getElementById('memberSinceEl').textContent = joined ? 'Member since ' + joined : '';
+
+      const avatarEl = document.getElementById('avatarEl');
+      if (profile.avatar_url) {
+        avatarEl.innerHTML = '<img src="' + profile.avatar_url + '" alt="' + username + '" onerror="this.parentElement.innerHTML=\'<span>' + username.charAt(0).toUpperCase() + '</span>\'" />';
+      } else {
+        avatarEl.innerHTML = '<span>' + username.charAt(0).toUpperCase() + '</span>';
+      }
+
+      const pronounsEl = document.getElementById('pronounsEl');
+      pronounsEl.textContent = profile.pronouns || '';
+      pronounsEl.style.display = profile.pronouns ? 'block' : 'none';
+
+      const bioEl = document.getElementById('bioEl');
+      bioEl.textContent = profile.bio || '';
+      bioEl.style.display = profile.bio ? 'block' : 'none';
+
+      const websiteEl = document.getElementById('websiteEl');
+      if (profile.website) {
+        const display = profile.website.replace(/^https?:\/\//, '');
+        websiteEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;opacity:0.6"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><a href="' + profile.website + '" target="_blank" rel="noopener">' + display + '</a>';
+        websiteEl.style.display = 'block';
+      } else {
+        websiteEl.style.display = 'none';
+      }
+    }
+
+    // ── STATS ──────────────────────────────────────────────
+    async function loadStats() {
+      const [reviews, followers, following] = await Promise.all([
+        sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', viewedUserId).not('review', 'is', null),
+        sb.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', viewedUserId),
+        sb.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', viewedUserId),
+      ]);
+      document.getElementById('statReviews').textContent = reviews.count ?? 0;
+      document.getElementById('statFollowers').textContent = followers.count ?? 0;
+      document.getElementById('statFollowing').textContent = following.count ?? 0;
+    }
+
+    // ── REVIEWS ────────────────────────────────────────────
+    async function loadReviews() {
+      const { data } = await sb.from('ratings')
+        .select('rating, review, album_id, created_at')
+        .eq('user_id', viewedUserId)
+        .not('review', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0) { document.getElementById('reviewsEmpty').style.display = 'block'; return; }
+      document.getElementById('reviewsEmpty').style.display = 'none';
+
+      const list = document.getElementById('reviewsList');
+
+      // Render with placeholders first
+      data.forEach((r, idx) => {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}">&#9733;</span>`;
+        const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        list.innerHTML += `
+          <div class="review-item" id="review-${idx}">
+            <div class="review-thumb" id="thumb-${idx}" style="background:var(--surface2)"></div>
+            <div class="review-body">
+              <a href="album.html?id=${r.album_id}" class="review-album-name" style="color:var(--accent)" id="albumname-${idx}">${r.album_id}</a>
+              <div class="review-stars">${stars}</div>
+              <div class="review-text-body">${r.review}</div>
+              <div class="review-date">${date}</div>
+            </div>
+          </div>`;
+      });
+
+      // Fetch real album names + covers from Spotify
+      // Spotify IDs are 22-character alphanumeric strings
+      const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
+
+      // Build a map of idx -> album_id for valid Spotify IDs only
+      const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
+
+      // Clean up display names for non-Spotify IDs (e.g. 'graduation' -> 'Graduation')
+      data.forEach((r, idx) => {
+        if (!isSpotifyId(r.album_id)) {
+          const nameEl = document.getElementById('albumname-' + idx);
+          if (nameEl) nameEl.textContent = r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
+        }
+      });
+
+      if (!validEntries.length) return;
+
+      try {
+        const token = await getSpotifyToken();
+        if (!token) return;
+
+        // Batch in groups of 20
+        const chunks = [];
+        for (let i = 0; i < validEntries.length; i += 20) chunks.push(validEntries.slice(i, i + 20));
+
+        for (const chunk of chunks) {
+          const ids = chunk.map(e => e.id).join(',');
+          const res = await fetch(`https://api.spotify.com/v1/albums?ids=${ids}&market=US`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const json = await res.json();
+          (json.albums || []).forEach((album, i) => {
+            if (!album) return;
+            const { idx } = chunk[i];
+            const nameEl = document.getElementById('albumname-' + idx);
+            const thumbEl = document.getElementById('thumb-' + idx);
+            if (nameEl) nameEl.textContent = album.name;
+            if (thumbEl && album.images?.[2]?.url) {
+              thumbEl.innerHTML = `<img src="${album.images[2].url}" style="width:100%;height:100%;object-fit:cover" />`;
+            }
+          });
+        }
+      } catch(e) { /* silently skip if Spotify unavailable */ }
+    }
+
+    async function getSpotifyToken() {
+      try {
+        const res = await fetch('https://throbbing-meadow-440e.spacedemon324.workers.dev');
+        const data = await res.json();
+        return data.access_token;
+      } catch { return null; }
+    }
+
+    // ── FOLLOW ─────────────────────────────────────────────
+    async function checkFollowStatus() {
+      const { data } = await sb.from('follows')
+        .select('id')
+        .eq('follower_id', currentUser.id)
+        .eq('following_id', viewedUserId)
+        .single();
+      isFollowing = !!data;
+      updateFollowBtn();
+    }
+
+    function updateFollowBtn() {
+      const btn = document.getElementById('followBtn');
+      if (isFollowing) {
+        btn.textContent = 'Following';
+        btn.classList.add('following');
+      } else {
+        btn.textContent = 'Follow';
+        btn.classList.remove('following');
+      }
+    }
+
+    async function toggleFollow() {
+      if (!currentUser) { window.location.href = 'index.html'; return; }
+      const btn = document.getElementById('followBtn');
+      btn.disabled = true;
+
+      if (isFollowing) {
+        await sb.from('follows').delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', viewedUserId);
+        isFollowing = false;
+      } else {
+        await sb.from('follows').insert({ follower_id: currentUser.id, following_id: viewedUserId });
+        isFollowing = true;
+        // Send notification to followed user
+        await sb.from('notifications').insert({
+          user_id: viewedUserId,
+          type: 'follow',
+          from_user_id: currentUser.id,
+        });
+      }
+
+      btn.disabled = false;
+      updateFollowBtn();
+      await loadStats();
+    }
+
+    // ── NOTIFICATIONS ───────────────────────────────────────
+    async function loadNotifications() {
+      if (!currentUser) return;
+      const { data } = await sb.from('notifications')
+        .select('id, type, from_user_id, read, created_at, profiles!from_user_id(username)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      const unread = (data || []).filter(n => !n.read).length;
+      const badge = document.getElementById('bellBadge');
+      if (unread > 0) { badge.textContent = unread > 9 ? '9+' : unread; badge.style.display = 'flex'; }
+      else { badge.style.display = 'none'; }
+
+      const list = document.getElementById('notifList');
+      if (!data || data.length === 0) { list.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
+
+      list.innerHTML = '';
+      data.forEach(n => {
+        const username = n.profiles?.username || 'Someone';
+        const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const msg = n.type === 'follow' ? `<strong>${username}</strong> followed you` : n.type;
+        list.innerHTML += `
+          <div class="notif-item ${n.read ? '' : 'unread'}">
+            <div class="notif-dot ${n.read ? 'read' : ''}"></div>
+            <div style="flex:1">
+              <div style="font-size:0.82rem">${msg}</div>
+              <div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${date}</div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function toggleNotifs() {
+      document.getElementById('notifPanel').classList.toggle('open');
+      markAllRead();
+    }
+
+    async function markAllRead() {
+      if (!currentUser) return;
+      await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
+      document.getElementById('bellBadge').style.display = 'none';
+      document.querySelectorAll('.notif-item').forEach(el => {
+        el.classList.remove('unread');
+        el.querySelector('.notif-dot')?.classList.add('read');
+      });
+    }
+
+    document.addEventListener('click', e => {
+      const panel = document.getElementById('notifPanel');
+      const bell = document.getElementById('bellBtn');
+      if (panel && !panel.contains(e.target) && bell && !bell.contains(e.target)) {
+        panel.classList.remove('open');
+      }
+    });
+
+    // ── EDIT MODAL ─────────────────────────────────────────
+    function openEditModal() {
+      document.getElementById('lockedUsername').textContent = currentProfile?.username || '';
+      document.getElementById('editPronouns').value = currentProfile?.pronouns || '';
+      document.getElementById('editBio').value = currentProfile?.bio || '';
+      document.getElementById('editAvatar').value = currentProfile?.avatar_url || '';
+      document.getElementById('editWebsite').value = currentProfile?.website || '';
+      document.getElementById('saveStatus').textContent = '';
+      document.getElementById('editOverlay').classList.add('open');
+    }
+
+    function closeEditModal() { document.getElementById('editOverlay').classList.remove('open'); }
+
+    async function saveProfile() {
+      const statusEl = document.getElementById('saveStatus');
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = 'Saving...'; btn.disabled = true;
+      const updates = {
+        pronouns: document.getElementById('editPronouns').value.trim() || null,
+        bio: document.getElementById('editBio').value.trim() || null,
+        avatar_url: document.getElementById('editAvatar').value.trim() || null,
+        website: document.getElementById('editWebsite').value.trim() || null,
+      };
+      const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.id);
+      btn.textContent = 'Save'; btn.disabled = false;
+      if (error) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = error.message; }
+      else {
+        currentProfile = { ...currentProfile, ...updates };
+        renderProfile(currentProfile);
+        statusEl.style.color = 'var(--accent)'; statusEl.textContent = 'Saved.';
+        setTimeout(closeEditModal, 800);
+      }
+    }
+
+    document.getElementById('editOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeEditModal(); });
+
+    // ── TABS ───────────────────────────────────────────────
+    function switchTab(name, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tabReviews').style.display = name === 'reviews' ? 'block' : 'none';
+      document.getElementById('tabLists').style.display = name === 'lists' ? 'block' : 'none';
+    }
+
+    async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+    // ── FAVORITE ALBUMS ────────────────────────────────────
+    let favorites = [null, null, null, null]; // array of {id, name, artist, cover} or null
+    let pickerSlotIdx = null;
+
+    async function loadFavorites() {
+      const grid = document.getElementById('favGrid');
+
+      // Fetch stored favorites from profile
+      const { data } = await sb.from('profiles')
+        .select('favorite_albums')
+        .eq('id', viewedUserId)
+        .single();
+
+      const stored = data?.favorite_albums || [];
+      favorites = [0,1,2,3].map(i => stored[i] || null);
+
+      // If all empty and not own profile, hide section
+      if (!isOwnProfile && favorites.every(f => !f)) {
+        document.getElementById('favSection').style.display = 'none';
+        return;
+      }
+
+      renderFavorites();
+
+      // Fetch cover art for any stored favorites that have a Spotify ID
+      const toFetch = favorites.filter(f => f && f.id && /^[A-Za-z0-9]{22}$/.test(f.id));
+      if (toFetch.length) {
+        try {
+          const token = await getSpotifyToken();
+          if (!token) return;
+          const ids = toFetch.map(f => f.id).join(',');
+          const res = await fetch(`https://api.spotify.com/v1/albums?ids=${ids}&market=US`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const json = await res.json();
+          (json.albums || []).forEach(album => {
+            if (!album) return;
+            const idx = favorites.findIndex(f => f && f.id === album.id);
+            if (idx !== -1) {
+              favorites[idx].cover = album.images?.[1]?.url || album.images?.[0]?.url;
+              favorites[idx].name = album.name;
+              favorites[idx].artist = album.artists.map(a => a.name).join(', ');
+            }
+          });
+          renderFavorites();
+        } catch(e) {}
+      }
+    }
+
+    function renderFavorites() {
+      const grid = document.getElementById('favGrid');
+      grid.innerHTML = '';
+      favorites.forEach((fav, idx) => {
+        const slot = document.createElement('div');
+        slot.className = 'fav-slot';
+        if (fav) {
+          slot.innerHTML = fav.cover
+            ? `<img src="${fav.cover}" alt="${fav.name}" />`
+            : `<div class="fav-plus" style="font-size:0.7rem;color:var(--muted);padding:4px;text-align:center">${fav.name || '?'}</div>`;
+          const overlay = document.createElement('div');
+          overlay.className = 'fav-overlay';
+          overlay.innerHTML = `<div class="fav-overlay-title">${fav.name || ''}</div>`;
+          if (isOwnProfile) {
+            overlay.innerHTML += `<div class="fav-overlay-remove" onclick="removeFavorite(${idx},event)">Remove</div>`;
+          }
+          slot.appendChild(overlay);
+          if (isOwnProfile) slot.onclick = () => openPicker(idx);
+        } else {
+          if (isOwnProfile) {
+            slot.innerHTML = '<div class="fav-plus">+</div>';
+            slot.onclick = () => openPicker(idx);
+          } else {
+            slot.innerHTML = '<div class="fav-plus" style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.08)">Empty</div>';
+          }
+        }
+        grid.appendChild(slot);
+      });
+    }
+
+    async function saveFavorites() {
+      const toSave = favorites.map(f => f ? { id: f.id, name: f.name, artist: f.artist, cover: f.cover } : null);
+      await sb.from('profiles').update({ favorite_albums: toSave }).eq('id', currentUser.id);
+    }
+
+    async function removeFavorite(idx, e) {
+      e.stopPropagation();
+      favorites[idx] = null;
+      renderFavorites();
+      await saveFavorites();
+    }
+
+    // ── ALBUM PICKER ────────────────────────────────────────
+    function openPicker(idx) {
+      pickerSlotIdx = idx;
+      document.getElementById('pickerInput').value = '';
+      document.getElementById('pickerResults').innerHTML = '<div class="picker-empty">Search for an album above.</div>';
+      document.getElementById('pickerOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('pickerInput').focus(), 100);
+    }
+
+    function closePicker() {
+      document.getElementById('pickerOverlay').classList.remove('open');
+    }
+
+    async function pickerSearch() {
+      const q = document.getElementById('pickerInput').value.trim();
+      if (!q) return;
+      const results = document.getElementById('pickerResults');
+      results.innerHTML = '<div class="picker-empty">Searching...</div>';
+      try {
+        const token = await getSpotifyToken();
+        if (!token) { results.innerHTML = '<div class="picker-empty">Could not connect to Spotify.</div>'; return; }
+        const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=album&limit=10&market=US`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const json = await res.json();
+        const items = json.albums?.items || [];
+        if (!items.length) { results.innerHTML = '<div class="picker-empty">No results found.</div>'; return; }
+        results.innerHTML = '';
+        items.forEach(album => {
+          const cover = album.images?.[2]?.url || album.images?.[0]?.url;
+          const artist = album.artists.map(a => a.name).join(', ');
+          const row = document.createElement('div');
+          row.className = 'picker-result';
+          row.innerHTML = `
+            <div class="picker-thumb">${cover ? `<img src="${cover}" />` : ''}</div>
+            <div>
+              <div class="picker-name">${album.name}</div>
+              <div class="picker-artist">${artist} · ${album.release_date?.slice(0,4)}</div>
+            </div>`;
+          row.onclick = () => selectFavorite(album.id, album.name, artist, album.images?.[1]?.url || album.images?.[0]?.url);
+          results.appendChild(row);
+        });
+      } catch(e) { results.innerHTML = '<div class="picker-empty">Something went wrong.</div>'; }
+    }
+
+    async function selectFavorite(id, name, artist, cover) {
+      favorites[pickerSlotIdx] = { id, name, artist, cover };
+      renderFavorites();
+      closePicker();
+      await saveFavorites();
+    }
+
+    document.getElementById('pickerOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closePicker();
+    });
+
+    init();
+  </script>
+</body>
+</html>
