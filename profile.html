@@ -587,7 +587,7 @@
     async function loadNotifications() {
       if (!currentUser) return;
       const { data } = await sb.from('notifications')
-        .select('id, type, from_user_id, read, created_at, profiles!from_user_id(username)')
+        .select('id, type, from_user_id, read, created_at')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -600,9 +600,13 @@
       const list = document.getElementById('notifList');
       if (!data || data.length === 0) { list.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
 
+      const fromIds = [...new Set((data || []).map(n => n.from_user_id).filter(Boolean))];
+      const { data: nProfiles } = await sb.from('profiles').select('id, username').in('id', fromIds);
+      const nUsernameMap = Object.fromEntries((nProfiles || []).map(p => [p.id, p.username]));
+
       list.innerHTML = '';
       data.forEach(n => {
-        const username = n.profiles?.username || 'Someone';
+        const username = nUsernameMap[n.from_user_id] || 'Someone';
         const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const msg = n.type === 'follow' ? `<strong>${username}</strong> followed you` : n.type;
         list.innerHTML += `

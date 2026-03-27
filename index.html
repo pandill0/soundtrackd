@@ -887,10 +887,6 @@
     // Spotify album IDs — these are the real IDs for each album
     const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
 
-    // Spotify's "Global Top Albums" editorial playlist ID
-    // This is updated by Spotify regularly and reflects current popularity
-    const TOP_ALBUMS_PLAYLIST = '37i9dQZF1DX4dyzvuaRJ0n';
-
     async function getSpotifyToken() {
       try {
         const res = await fetch(WORKER_URL);
@@ -939,46 +935,19 @@
       if (!token) { renderAlbumGrid([]); return; }
 
       try {
-        // Fetch the global top 50 new releases playlist
+        // Use Spotify new releases — works with client credentials
         const res = await fetch(
-          `https://api.spotify.com/v1/playlists/${TOP_ALBUMS_PLAYLIST}/tracks?limit=8&market=US`,
+          'https://api.spotify.com/v1/browse/new-releases?limit=8&market=US',
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         const data = await res.json();
-
-        // Extract unique albums from the playlist tracks
-        const seen = new Set();
-        const albums = [];
-        for (const item of (data.items || [])) {
-          const album = item.track?.album;
-          if (!album || seen.has(album.id)) continue;
-          seen.add(album.id);
-          albums.push({
-            id: album.id,
-            title: album.name,
-            artist: album.artists.map(a => a.name).join(', '),
-            cover: album.images?.[1]?.url || album.images?.[0]?.url,
-          });
-          if (albums.length >= 8) break;
-        }
-
-        if (albums.length > 0) {
-          renderAlbumGrid(albums);
-        } else {
-          // Fallback: use Spotify new releases if playlist is empty
-          const fallback = await fetch(
-            'https://api.spotify.com/v1/browse/new-releases?limit=8&country=US',
-            { headers: { 'Authorization': `Bearer ${token}` } }
-          );
-          const fdata = await fallback.json();
-          const fallbackAlbums = (fdata.albums?.items || []).map(a => ({
-            id: a.id,
-            title: a.name,
-            artist: a.artists.map(x => x.name).join(', '),
-            cover: a.images?.[1]?.url || a.images?.[0]?.url,
-          }));
-          renderAlbumGrid(fallbackAlbums);
-        }
+        const albums = (data.albums?.items || []).map(a => ({
+          id: a.id,
+          title: a.name,
+          artist: a.artists.map(x => x.name).join(', '),
+          cover: a.images?.[1]?.url || a.images?.[0]?.url,
+        }));
+        renderAlbumGrid(albums);
 
       } catch (e) {
         console.error('Trending load failed', e);
@@ -993,7 +962,7 @@
     async function loadRecentReviews() {
       const rl = document.getElementById('reviewList');
       const { data, error } = await sb.from('ratings')
-        .select('rating, review, album_id, created_at, profiles(username)')
+        .select('rating, review, album_id, created_at, user_id')
         .not('review', 'is', null)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -1003,9 +972,14 @@
         return;
       }
 
+      // Fetch usernames separately
+      const userIds = [...new Set(data.map(r => r.user_id))];
+      const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+      const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+
       rl.innerHTML = '';
       data.forEach(r => {
-        const username = r.profiles?.username || 'anonymous';
+        const username = usernameMap[r.user_id] || 'anonymous';
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         let stars = '';
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
@@ -1076,7 +1050,7 @@
     async function loadNotifications() {
       if (!currentUser) return;
       const { data } = await sb.from('notifications')
-        .select('id, type, from_user_id, read, created_at, profiles!from_user_id(username)')
+        .select('id, type, from_user_id, read, created_at')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -1086,9 +1060,15 @@
       else { badge.style.display = 'none'; }
       const list = document.getElementById('notifList');
       if (!data || data.length === 0) { list.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
+
+      // Fetch usernames separately
+      const fromIds = [...new Set((data || []).map(n => n.from_user_id).filter(Boolean))];
+      const { data: nProfiles } = await sb.from('profiles').select('id, username').in('id', fromIds);
+      const nUsernameMap = Object.fromEntries((nProfiles || []).map(p => [p.id, p.username]));
+
       list.innerHTML = '';
       data.forEach(n => {
-        const username = n.profiles?.username || 'Someone';
+        const username = nUsernameMap[n.from_user_id] || 'Someone';
         const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const msg = n.type === 'follow' ? '<strong>' + username + '</strong> followed you' : n.type;
         list.innerHTML += '<div class="notif-item ' + (n.read ? '' : 'unread') + '"><div class="notif-dot ' + (n.read ? 'read' : '') + '"></div><div style="flex:1"><div style="font-size:0.82rem">' + msg + '</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">' + date + '</div></div></div>';
