@@ -174,6 +174,10 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
+    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; padding: 3px 9px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .like-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
   </style>
 </head>
 <body>
@@ -459,13 +463,26 @@
     // ── REVIEWS ────────────────────────────────────────────
     async function loadReviews() {
       const { data } = await sb.from('ratings')
-        .select('rating, review, album_id, created_at')
+        .select('id, rating, review, album_id, created_at')
         .eq('user_id', viewedUserId)
         .not('review', 'is', null)
         .order('created_at', { ascending: false });
 
       if (!data || data.length === 0) { document.getElementById('reviewsEmpty').style.display = 'block'; return; }
       document.getElementById('reviewsEmpty').style.display = 'none';
+
+      // Fetch like counts
+      const reviewIds = data.map(r => r.id).filter(Boolean);
+      let likeCounts = {};
+      let myProfileLikes = new Set();
+      if (reviewIds.length) {
+        const { data: ld } = await sb.from('review_likes').select('rating_id').in('rating_id', reviewIds);
+        (ld || []).forEach(l => { likeCounts[l.rating_id] = (likeCounts[l.rating_id] || 0) + 1; });
+        if (currentUser) {
+          const { data: mld } = await sb.from('review_likes').select('rating_id').eq('user_id', currentUser.id).in('rating_id', reviewIds);
+          myProfileLikes = new Set((mld || []).map(l => l.rating_id));
+        }
+      }
 
       const list = document.getElementById('reviewsList');
 
@@ -474,6 +491,9 @@
         let stars = '';
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}">&#9733;</span>`;
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const liked = myProfileLikes.has(r.id);
+        const lc = likeCounts[r.id] || 0;
+        const canLike = currentUser && currentUser.id !== viewedUserId && r.id;
         list.innerHTML += `
           <div class="review-item" id="review-${idx}">
             <div class="review-thumb" id="thumb-${idx}" style="background:var(--surface2)"></div>
@@ -481,8 +501,13 @@
               <a href="album.html?id=${r.album_id}" class="review-album-name" style="color:var(--accent)" id="albumname-${idx}">${r.album_id}</a>
               <div class="review-stars">${stars}</div>
               <div class="review-text-body review-text-preview">${r.review}</div>
-              <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:3px;display:inline-block">Read more →</a>
-              <div class="review-date">${date}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+                <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase">Read more →</a>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="review-date">${date}</span>
+                  ${canLike ? `<button class="like-btn ${liked?'liked':''}" onclick="toggleProfileLike('${r.id}',this,${lc},${liked})">${liked?'♥':'♡'} <span>${lc||''}</span></button>` : lc > 0 ? `<span style="font-size:0.72rem;color:var(--muted)">♥ ${lc}</span>` : ''}
+                </div>
+              </div>
             </div>
           </div>`;
       });
@@ -693,6 +718,28 @@
       el.classList.add('active');
       document.getElementById('tabReviews').style.display = name === 'reviews' ? 'block' : 'none';
       document.getElementById('tabLists').style.display = name === 'lists' ? 'block' : 'none';
+    }
+
+    async function toggleProfileLike(reviewId, btn, currentCount, isLiked) {
+      if (!currentUser) return;
+      const countEl = btn.querySelector('span');
+      btn.disabled = true;
+      if (isLiked) {
+        await sb.from('review_likes').delete().eq('user_id', currentUser.id).eq('rating_id', reviewId);
+        btn.classList.remove('liked');
+        btn.childNodes[0].textContent = '♡ ';
+        const newCount = Math.max(0, currentCount - 1);
+        countEl.textContent = newCount || '';
+        btn.onclick = () => toggleProfileLike(reviewId, btn, newCount, false);
+      } else {
+        await sb.from('review_likes').insert({ user_id: currentUser.id, rating_id: reviewId });
+        btn.classList.add('liked');
+        btn.childNodes[0].textContent = '♥ ';
+        const newCount = currentCount + 1;
+        countEl.textContent = newCount;
+        btn.onclick = () => toggleProfileLike(reviewId, btn, newCount, true);
+      }
+      btn.disabled = false;
     }
 
     async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }

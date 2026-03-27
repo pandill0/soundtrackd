@@ -610,6 +610,10 @@
       color: var(--muted);
       line-height: 1.6;
     }
+
+    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; padding: 3px 9px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .like-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
   </style>
 </head>
 <body>
@@ -999,6 +1003,19 @@
       const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
       const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
 
+      // Fetch like counts
+      const reviewIds = data.map(r => r.id).filter(Boolean);
+      let likeCounts = {};
+      let myHomeLikes = new Set();
+      if (reviewIds.length) {
+        const { data: ld } = await sb.from('review_likes').select('rating_id').in('rating_id', reviewIds);
+        (ld || []).forEach(l => { likeCounts[l.rating_id] = (likeCounts[l.rating_id] || 0) + 1; });
+        if (currentUser) {
+          const { data: mld } = await sb.from('review_likes').select('rating_id').eq('user_id', currentUser.id).in('rating_id', reviewIds);
+          myHomeLikes = new Set((mld || []).map(l => l.rating_id));
+        }
+      }
+
       rl.innerHTML = '';
       data.forEach((r, idx) => {
         const username = usernameMap[r.user_id] || 'anonymous';
@@ -1007,6 +1024,9 @@
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
         const isSpotifyId = /^[A-Za-z0-9]{22}$/.test(r.album_id);
         const displayName = isSpotifyId ? r.album_id : r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
+        const liked = myHomeLikes.has(r.id);
+        const lc = likeCounts[r.id] || 0;
+        const canLike = currentUser && currentUser.id !== r.user_id && r.id;
         rl.innerHTML += `
           <div class="review-item">
             <div class="review-thumb" style="background:var(--surface2)" id="rl-thumb-${idx}">
@@ -1020,7 +1040,10 @@
               <div class="review-text-preview">${r.review}</div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
                 <span style="font-size:0.75rem;color:var(--muted)"><span style="color:var(--accent2)">${username}</span> &nbsp;·&nbsp; ${date}</span>
-                <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Read →</a>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${canLike ? `<button class="like-btn ${liked?'liked':''}" onclick="toggleHomeLike('${r.id}',this,${lc},${liked})">${liked?'♥':'♡'} <span>${lc||''}</span></button>` : lc > 0 ? `<span style="font-size:0.72rem;color:var(--muted)">♥ ${lc}</span>` : ''}
+                  <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Read →</a>
+                </div>
               </div>
             </div>
           </div>`;
@@ -1143,6 +1166,28 @@
       const bell = document.getElementById('bellBtn');
       if (panel && !panel.contains(e.target) && bell && !bell.contains(e.target)) panel.classList.remove('open');
     });
+
+    async function toggleHomeLike(reviewId, btn, currentCount, isLiked) {
+      if (!currentUser) return;
+      const countEl = btn.querySelector('span');
+      btn.disabled = true;
+      if (isLiked) {
+        await sb.from('review_likes').delete().eq('user_id', currentUser.id).eq('rating_id', reviewId);
+        btn.classList.remove('liked');
+        btn.childNodes[0].textContent = '♡ ';
+        const newCount = Math.max(0, currentCount - 1);
+        countEl.textContent = newCount || '';
+        btn.onclick = () => toggleHomeLike(reviewId, btn, newCount, false);
+      } else {
+        await sb.from('review_likes').insert({ user_id: currentUser.id, rating_id: reviewId });
+        btn.classList.add('liked');
+        btn.childNodes[0].textContent = '♥ ';
+        const newCount = currentCount + 1;
+        countEl.textContent = newCount;
+        btn.onclick = () => toggleHomeLike(reviewId, btn, newCount, true);
+      }
+      btn.disabled = false;
+    }
 
     initAuth();
     // Load notifications after auth is ready

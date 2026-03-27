@@ -118,6 +118,14 @@
       color: var(--muted);
       line-height: 1.65;
     }
+
+    .review-tab { font-family: 'Nunito', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.85rem 1.25rem; cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+    .review-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .review-tab:hover { color: var(--text); }
+    .like-btn { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; padding: 3px 9px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; border-radius: 2px; }
+    .like-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
+    .like-btn svg { width: 11px; height: 11px; }
   </style>
 </head>
 <body>
@@ -223,9 +231,16 @@
       <div class="section-divider"><h2>Tracklist</h2><div class="line"></div></div>
       <div class="tracklist" id="tracklist"></div>
 
-      <div class="section-divider"><h2>Reviews</h2><div class="line"></div></div>
-      <div class="review-list" id="reviewList">
-        <div class="empty-reviews" id="emptyReviews">No reviews yet — be the first.</div>
+      <div class="section-divider" style="margin-bottom:0"><h2>Reviews</h2><div class="line"></div></div>
+
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem">
+        <button class="review-tab active" id="tabRecent" onclick="switchReviewTab('recent')">Recent</button>
+        <button class="review-tab" id="tabTop" onclick="switchReviewTab('top')">Most liked</button>
+      </div>
+
+      <div id="reviewListWrap">
+        <div class="empty-reviews" id="emptyReviews" style="display:none">No reviews yet — be the first.</div>
+        <div class="review-list" id="reviewList"></div>
       </div>
 
     </div>
@@ -450,35 +465,130 @@
       btn.textContent = `Your rating: ${data.rating}/5 — Edit`;
     }
 
+    let currentReviewTab = 'recent';
+    let allReviews = [];
+    let myLikes = new Set();
+
+    function switchReviewTab(tab) {
+      currentReviewTab = tab;
+      document.getElementById('tabRecent').classList.toggle('active', tab === 'recent');
+      document.getElementById('tabTop').classList.toggle('active', tab === 'top');
+      renderReviews();
+    }
+
     async function loadReviews() {
-      const { data } = await sb.from('ratings')
-        .select('rating, review, user_id, created_at, profiles(username)')
+      const list = document.getElementById('reviewList');
+      const empty = document.getElementById('emptyReviews');
+      list.innerHTML = '';
+
+      // Fetch reviews without join
+      const { data, error } = await sb.from('ratings')
+        .select('id, rating, review, user_id, created_at')
         .eq('album_id', ALBUM_ID)
         .not('review', 'is', null)
         .order('created_at', { ascending: false });
 
-      const list = document.getElementById('reviewList');
-      const empty = document.getElementById('emptyReviews');
-      if (!data || data.length === 0) { empty.style.display = 'block'; return; }
+      if (error || !data || data.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
       empty.style.display = 'none';
 
-      data.forEach(r => {
-        const username = r.profiles?.username || 'anonymous';
+      // Fetch usernames separately
+      const userIds = [...new Set(data.map(r => r.user_id))];
+      const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+      const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+
+      // Fetch like counts for all reviews
+      const reviewIds = data.map(r => r.id);
+      const { data: likesData } = await sb.from('review_likes').select('rating_id').in('rating_id', reviewIds);
+      const likeCounts = {};
+      (likesData || []).forEach(l => { likeCounts[l.rating_id] = (likeCounts[l.rating_id] || 0) + 1; });
+
+      // Fetch current user's likes
+      if (currentUser) {
+        const { data: myLikesData } = await sb.from('review_likes')
+          .select('rating_id')
+          .eq('user_id', currentUser.id)
+          .in('rating_id', reviewIds);
+        myLikes = new Set((myLikesData || []).map(l => l.rating_id));
+      }
+
+      allReviews = data.map(r => ({
+        ...r,
+        username: usernameMap[r.user_id] || 'anonymous',
+        likeCount: likeCounts[r.id] || 0,
+      }));
+
+      renderReviews();
+    }
+
+    function renderReviews() {
+      const list = document.getElementById('reviewList');
+      list.innerHTML = '';
+
+      const sorted = [...allReviews].sort((a, b) =>
+        currentReviewTab === 'top'
+          ? b.likeCount - a.likeCount
+          : new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      if (sorted.length === 0) { document.getElementById('emptyReviews').style.display = 'block'; return; }
+      document.getElementById('emptyReviews').style.display = 'none';
+
+      sorted.forEach(r => {
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const liked = myLikes.has(r.id);
+        const canLike = currentUser && currentUser.id !== r.user_id;
         list.innerHTML += `
-          <div class="review-item">
-            <div class="review-avatar">${username.charAt(0).toUpperCase()}</div>
+          <div class="review-item" id="review-${r.id}">
+            <div class="review-avatar">${r.username.charAt(0).toUpperCase()}</div>
             <div class="review-body">
               <div class="review-header">
-                <span class="review-user">${username}</span>
+                <a href="profile.html?user=${r.user_id}" class="review-user" style="color:var(--accent)">${r.username}</a>
                 <div class="review-stars">${starsHtml(r.rating, 11)}</div>
               </div>
               <div class="review-text-preview">${r.review}</div>
-              <a href="album.html?id=${ALBUM_ID}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:3px;display:inline-block">Read more →</a>
-              <div class="review-date">${date}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                <span class="review-date">${date}</span>
+                ${canLike ? `
+                  <button class="like-btn ${liked ? 'liked' : ''}" id="like-${r.id}" onclick="toggleLike('${r.id}')">
+                    <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span id="like-count-${r.id}">${r.likeCount || ''}</span>
+                  </button>` : r.likeCount > 0 ? `
+                  <span style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:4px">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    ${r.likeCount}
+                  </span>` : ''}
+              </div>
             </div>
           </div>`;
       });
+    }
+
+    async function toggleLike(reviewId) {
+      if (!currentUser) { window.location.href = 'index.html'; return; }
+      const btn = document.getElementById('like-' + reviewId);
+      const countEl = document.getElementById('like-count-' + reviewId);
+      const review = allReviews.find(r => r.id === reviewId);
+      if (!review) return;
+
+      btn.disabled = true;
+      if (myLikes.has(reviewId)) {
+        await sb.from('review_likes').delete().eq('user_id', currentUser.id).eq('rating_id', reviewId);
+        myLikes.delete(reviewId);
+        review.likeCount = Math.max(0, review.likeCount - 1);
+        btn.classList.remove('liked');
+        btn.querySelector('svg').setAttribute('fill', 'none');
+      } else {
+        await sb.from('review_likes').insert({ user_id: currentUser.id, rating_id: reviewId });
+        myLikes.add(reviewId);
+        review.likeCount++;
+        btn.classList.add('liked');
+        btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      }
+      countEl.textContent = review.likeCount || '';
+      btn.disabled = false;
     }
 
     // ── modal ──────────────────────────────────────────────
@@ -514,8 +624,9 @@
       document.getElementById('myRatingBtn').style.display = 'block';
       document.getElementById('myRatingBtn').textContent = `Your rating: ${selectedRating}/5 — Edit`;
       closeRateModal();
+      allReviews = [];
+      myLikes = new Set();
       document.getElementById('reviewList').innerHTML = '';
-      document.getElementById('emptyReviews').style.display = 'block';
       await loadRatings();
       await loadReviews();
     }
