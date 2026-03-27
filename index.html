@@ -1007,19 +1007,21 @@
       const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
 
       rl.innerHTML = '';
-      data.forEach(r => {
+      data.forEach((r, idx) => {
         const username = usernameMap[r.user_id] || 'anonymous';
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         let stars = '';
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
+        const isSpotifyId = /^[A-Za-z0-9]{22}$/.test(r.album_id);
+        const displayName = isSpotifyId ? r.album_id : r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
         rl.innerHTML += `
           <div class="review-item">
-            <div class="review-thumb" style="background:var(--surface2)">
-              <div class="ph">${r.album_id.slice(0,2).toUpperCase()}</div>
+            <div class="review-thumb" style="background:var(--surface2)" id="rl-thumb-${idx}">
+              <div class="ph">${displayName.slice(0,2).toUpperCase()}</div>
             </div>
             <div class="review-body">
               <div class="review-header">
-                <span class="review-album"><a href="album.html?id=${r.album_id}" style="color:var(--text)" id="rl-album-${r.album_id}">${r.album_id}</a></span>
+                <span class="review-album"><a href="album.html?id=${r.album_id}" style="color:var(--text)" id="rl-album-${idx}">${displayName}</a></span>
               </div>
               <div class="review-stars" style="display:flex;gap:2px;margin:3px 0">${stars}</div>
               <div class="review-text-preview">${r.review}</div>
@@ -1030,6 +1032,31 @@
             </div>
           </div>`;
       });
+
+      // Fetch real album names + covers from Spotify for valid IDs
+      const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
+      const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
+      if (!validEntries.length) return;
+
+      try {
+        const token = await getSpotifyToken();
+        if (!token) return;
+        for (const { idx, id } of validEntries) {
+          try {
+            const res = await fetch(`https://api.spotify.com/v1/albums/${id}?market=US`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) continue;
+            const album = await res.json();
+            const nameEl = document.getElementById('rl-album-' + idx);
+            const thumbEl = document.getElementById('rl-thumb-' + idx);
+            if (nameEl && album.name) nameEl.textContent = album.name;
+            if (thumbEl && album.images?.[2]?.url) {
+              thumbEl.innerHTML = `<img src="${album.images[2].url}" style="width:100%;height:100%;object-fit:cover" />`;
+            }
+          } catch(e) { continue; }
+        }
+      } catch(e) {}
     }
 
     function starsHtml(n, size = 11) {
