@@ -663,7 +663,7 @@
   <!-- TRENDING -->
   <section class="trending-section">
     <div class="section-divider">
-      <h2>Latest releases</h2>
+      <h2>Essential listening</h2>
       <div class="line"></div>
       <span class="see-all">See all →</span>
     </div>
@@ -939,17 +939,17 @@
       }
     }
 
-    // Spotify artist IDs for top artists — fetch their latest album
-    // This uses only /artists and /albums endpoints which work with client credentials
-    const TOP_ARTIST_IDS = [
-      '0TnOYISbd1XYRBk9myaseg', // Pitbull (test — replace with current artists)
-      '06HL4z0CvFAxyc27GXpf02', // Taylor Swift
-      '3TVXtAsR1Inumwj472S9r4', // Drake
-      '1Xyo4u8uXC1ZmMpatF05PJ', // The Weeknd
-      '4q3ewBCX7sLwd24euuV69X', // Bad Bunny
-      '66CXWjxzNUsdJxJ2JdwvnR', // Ariana Grande
-      '7dGJo4pcD2V6oG8kP0tJRR', // Eminem
-      '6eUKZXaKkcviH0Ku9w2n3V', // Ed Sheeran
+    // Curated album IDs — one batch request, works with client credentials
+    // Swap these out periodically to keep fresh
+    const CURATED_IDS = [
+      '4SZko61aMnmgvNhfhgTuD3', // Graduation — Kanye West
+      '7ycBtnsMtyVbbwTfJwRjSP', // To Pimp a Butterfly — Kendrick Lamar
+      '3mH6qwIy9crq0I9YQbOuDf', // Blonde — Frank Ocean
+      '4LH4d3cOWNNsVw41Gqt2kv', // Funeral — Arcade Fire
+      '6UcNnMGniYl5RObNbfesiY', // Fetch the Bolt Cutters — Fiona Apple
+      '6dVIqQ8qmQ5GBnJ9shOYGE', // OK Computer — Radiohead
+      '5zi7WsKlIiUXv09tbGLKsE', // Hit Me Hard and Soft — Billie Eilish
+      '6s84HNHmFNsNFLSPFqqhLQ', // GNX — Kendrick Lamar
     ];
 
     async function loadTrendingAlbums() {
@@ -958,26 +958,19 @@
       if (!token) { renderAlbumGrid([]); return; }
 
       try {
-        // Fetch latest album from each top artist
-        const albumPromises = TOP_ARTIST_IDS.map(id =>
-          fetch(`https://api.spotify.com/v1/artists/${id}/albums?limit=1&include_groups=album&market=US`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }).then(r => r.json()).then(d => d.items?.[0] || null).catch(() => null)
+        const res = await fetch(
+          `https://api.spotify.com/v1/albums?ids=${CURATED_IDS.join(',')}&market=US`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
         );
-
-        const results = await Promise.all(albumPromises);
-        const albums = results.filter(Boolean).map(a => ({
+        if (!res.ok) { renderAlbumGrid([]); return; }
+        const data = await res.json();
+        const albums = (data.albums || []).filter(Boolean).map(a => ({
           id: a.id,
           title: a.name,
           artist: a.artists.map(x => x.name).join(', '),
           cover: a.images?.[1]?.url || a.images?.[0]?.url,
         }));
-
-        if (albums.length > 0) {
-          renderAlbumGrid(albums);
-        } else {
-          renderAlbumGrid([]);
-        }
+        renderAlbumGrid(albums);
       } catch (e) {
         console.error('Trending load failed', e);
         renderAlbumGrid([]);
@@ -1033,10 +1026,12 @@
           </div>`;
       });
 
-      // Fetch real album names + covers from Spotify for valid IDs
+      // Fetch real album names + covers from Spotify — delayed to avoid rate limit collision
       const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
       const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
       if (!validEntries.length) return;
+
+      await new Promise(r => setTimeout(r, 1200));
 
       try {
         const token = await getSpotifyToken();
