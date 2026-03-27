@@ -167,6 +167,13 @@
 
     @keyframes pulse { 0%,100%{opacity:0.4}50%{opacity:0.8} }
     .fav-skel { animation: pulse 1.5s ease-in-out infinite; }
+
+    .review-text-preview {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body>
@@ -473,7 +480,8 @@
             <div class="review-body">
               <a href="album.html?id=${r.album_id}" class="review-album-name" style="color:var(--accent)" id="albumname-${idx}">${r.album_id}</a>
               <div class="review-stars">${stars}</div>
-              <div class="review-text-body">${r.review}</div>
+              <div class="review-text-body review-text-preview">${r.review}</div>
+              <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:3px;display:inline-block">Read more →</a>
               <div class="review-date">${date}</div>
             </div>
           </div>`;

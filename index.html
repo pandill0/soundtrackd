@@ -600,6 +600,16 @@
     .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
     .notif-dot.read { background: transparent; border: 1px solid var(--border); }
     .notif-empty { padding: 2rem 1rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
+
+    .review-text-preview {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -653,7 +663,7 @@
   <!-- TRENDING -->
   <section class="trending-section">
     <div class="section-divider">
-      <h2>Trending globally</h2>
+      <h2>Latest releases</h2>
       <div class="line"></div>
       <span class="see-all">See all →</span>
     </div>
@@ -929,26 +939,45 @@
       }
     }
 
+    // Spotify artist IDs for top artists — fetch their latest album
+    // This uses only /artists and /albums endpoints which work with client credentials
+    const TOP_ARTIST_IDS = [
+      '0TnOYISbd1XYRBk9myaseg', // Pitbull (test — replace with current artists)
+      '06HL4z0CvFAxyc27GXpf02', // Taylor Swift
+      '3TVXtAsR1Inumwj472S9r4', // Drake
+      '1Xyo4u8uXC1ZmMpatF05PJ', // The Weeknd
+      '4q3ewBCX7sLwd24euuV69X', // Bad Bunny
+      '66CXWjxzNUsdJxJ2JdwvnR', // Ariana Grande
+      '7dGJo4pcD2V6oG8kP0tJRR', // Eminem
+      '6eUKZXaKkcviH0Ku9w2n3V', // Ed Sheeran
+    ];
+
     async function loadTrendingAlbums() {
       renderSkeletons();
       const token = await getSpotifyToken();
       if (!token) { renderAlbumGrid([]); return; }
 
       try {
-        // Use Spotify new releases — works with client credentials
-        const res = await fetch(
-          'https://api.spotify.com/v1/browse/new-releases?limit=8&market=US',
-          { headers: { 'Authorization': `Bearer ${token}` } }
+        // Fetch latest album from each top artist
+        const albumPromises = TOP_ARTIST_IDS.map(id =>
+          fetch(`https://api.spotify.com/v1/artists/${id}/albums?limit=1&include_groups=album&market=US`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }).then(r => r.json()).then(d => d.items?.[0] || null).catch(() => null)
         );
-        const data = await res.json();
-        const albums = (data.albums?.items || []).map(a => ({
+
+        const results = await Promise.all(albumPromises);
+        const albums = results.filter(Boolean).map(a => ({
           id: a.id,
           title: a.name,
           artist: a.artists.map(x => x.name).join(', '),
           cover: a.images?.[1]?.url || a.images?.[0]?.url,
         }));
-        renderAlbumGrid(albums);
 
+        if (albums.length > 0) {
+          renderAlbumGrid(albums);
+        } else {
+          renderAlbumGrid([]);
+        }
       } catch (e) {
         console.error('Trending load failed', e);
         renderAlbumGrid([]);
@@ -990,12 +1019,13 @@
             </div>
             <div class="review-body">
               <div class="review-header">
-                <span class="review-album"><a href="album.html?id=${r.album_id}" style="color:var(--text)">${r.album_id}</a></span>
+                <span class="review-album"><a href="album.html?id=${r.album_id}" style="color:var(--text)" id="rl-album-${r.album_id}">${r.album_id}</a></span>
               </div>
               <div class="review-stars" style="display:flex;gap:2px;margin:3px 0">${stars}</div>
-              <div class="review-text">${r.review}</div>
-              <div class="review-user" style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-                <span style="color:var(--accent2)">${username}</span> &nbsp;·&nbsp; ${date}
+              <div class="review-text-preview">${r.review}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+                <span style="font-size:0.75rem;color:var(--muted)"><span style="color:var(--accent2)">${username}</span> &nbsp;·&nbsp; ${date}</span>
+                <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Read →</a>
               </div>
             </div>
           </div>`;

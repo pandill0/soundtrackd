@@ -47,11 +47,11 @@
     .rating-count { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
     .rating-divider { width: 1px; background: var(--border); flex-shrink: 0; }
     .rating-chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 0; }
-    .chart-bars-wrap { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
-    .chart-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
-    .chart-bar-v { width: 100%; background: var(--star); opacity: 0.7; border-radius: 2px 2px 0 0; height: 0%; transition: height 0.6s cubic-bezier(0.4,0,0.2,1); min-height: 2px; }
+    .chart-bars-wrap { display: flex; align-items: flex-end; gap: 3px; height: 64px; }
+    .chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+    .chart-bar-v { width: 100%; background: var(--star); opacity: 0.55; border-radius: 2px 2px 0 0; height: 0; transition: height 0.55s cubic-bezier(0.4,0,0.2,1); }
     .chart-bar-v.active { opacity: 1; }
-    .chart-labels { display: flex; gap: 3px; margin-top: 4px; }
+    .chart-labels { display: flex; gap: 3px; margin-top: 5px; }
     .chart-label-v { flex: 1; text-align: center; font-size: 9px; color: var(--muted); }
 
     .rate-row { display: flex; gap: 0.75rem; align-items: center; }
@@ -108,6 +108,16 @@
     footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 4rem; font-size: 0.75rem; color: var(--muted); }
     .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
     .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
+
+    .review-text-preview {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
   </style>
 </head>
 <body>
@@ -234,7 +244,8 @@
         <span class="modal-star" data-i="5"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
       </div>
       <div class="modal-rating-label" id="modalRatingLabel">Move your mouse over the stars</div>
-      <textarea id="reviewText" placeholder="Write a review... (optional)"></textarea>
+      <textarea id="reviewText" placeholder="Write a review... (optional)" maxlength="1000" oninput="updateCharCount()"></textarea>
+      <div style="font-size:0.72rem;color:var(--muted);text-align:right;margin-top:4px"><span id="charCount">0</span>/1000</div>
       <div class="modal-error" id="rateError"></div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeRateModal()">Cancel</button>
@@ -412,15 +423,18 @@
       });
       const max = Math.max(...Object.values(buckets), 1);
 
-      // Animate vertical bars in after short delay
+      // Animate vertical bars in after short delay — px heights relative to 64px container
+      const MAX_H = 60;
+      const maxCount = Math.max(...Object.values(buckets), 1);
       setTimeout(() => {
         Object.entries(buckets).forEach(([val, count]) => {
           const key = val.toString().replace('.', '');
           const el = document.getElementById('bar' + key);
           if (el) {
-            const pct = Math.round((count / max) * 100);
-            el.style.height = Math.max(pct, count > 0 ? 4 : 0) + '%';
-            if (count === Math.max(...Object.values(buckets))) el.classList.add('active');
+            const px = count > 0 ? Math.max(Math.round((count / maxCount) * MAX_H), 3) : 0;
+            el.style.height = px + 'px';
+            if (count === maxCount && count > 0) el.classList.add('active');
+            else el.classList.remove('active');
           }
         });
       }, 150);
@@ -459,7 +473,8 @@
                 <span class="review-user">${username}</span>
                 <div class="review-stars">${starsHtml(r.rating, 11)}</div>
               </div>
-              <div class="review-text">${r.review}</div>
+              <div class="review-text-preview">${r.review}</div>
+              <a href="album.html?id=${ALBUM_ID}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:3px;display:inline-block">Read more →</a>
               <div class="review-date">${date}</div>
             </div>
           </div>`;
@@ -560,6 +575,12 @@
       renderModalStars();
       document.getElementById('modalRatingLabel').textContent = ratingLabels[r] || '';
     });
+
+    function updateCharCount() {
+      const len = document.getElementById('reviewText').value.length;
+      document.getElementById('charCount').textContent = len;
+      document.getElementById('charCount').style.color = len > 900 ? 'var(--danger)' : 'var(--muted)';
+    }
 
     document.getElementById('rateOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeRateModal(); });
 
