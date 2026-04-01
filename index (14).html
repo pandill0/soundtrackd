@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f0b;
+      --surface: #0f1510;
+      --surface2: #161e17;
+      --border: rgba(255,255,255,0.07);
+      --text: #e2e8e3;
+      --muted: #5a6b5c;
+      --accent: #4a9e6b;
+      --accent2: #7c6fcd;
+      --danger: #e05c5c;
+      --star: #c8a96e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 30% at 80% 100%, rgba(74,158,107,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav, .page-wrap, footer { position: relative; z-index: 1; }
+
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(10,15,11,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .logo span { font-style: italic; color: var(--text); }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .nav-links a {
+      white-space: nowrap;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    /* hide nav links progressively as space shrinks */
+    @media (max-width: 780px) { .nav-links a:nth-child(3) { display: none; } }
+    @media (max-width: 680px) { .nav-links a:nth-child(2) { display: none; } }
+    @media (max-width: 580px) { .nav-links { display: none; } }
+
+    .btn-signin {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* SEARCH */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      width: 180px;
+      transition: border-color 0.2s;
+    }
+
+    .search-bar:focus-within { border-color: rgba(200,169,110,0.4); }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    .search-bar input::placeholder { color: var(--muted); }
+
+    .search-icon { color: var(--muted); font-size: 14px; }
+
+    /* HERO */
+    .hero {
+      padding: 5rem 0 3rem;
+      max-width: 680px;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 em { font-style: italic; color: var(--accent); }
+
+    .hero p {
+      color: rgba(226,232,227,0.72);
+      font-size: 1rem;
+      max-width: 480px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; align-items: center; }
+
+    .btn-primary {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.75rem 2rem;
+      background: var(--accent);
+      color: #0d0d0f;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-ghost {
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+
+    .btn-ghost:hover { color: var(--text); }
+
+    /* DIVIDER */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0;
+      margin-bottom: 2rem;
+    }
+
+    .section-divider h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .section-divider .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-divider .see-all {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+
+    .section-divider .see-all:hover { color: var(--accent); }
+
+    /* TRENDING GRID */
+    .trending-section { padding: 0 0 3rem; }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .album-card { cursor: pointer; display: block; text-decoration: none; color: inherit; }
+    a.album-card { display: block; }
+
+    .album-art {
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--surface2);
+      margin-bottom: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .album-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .album-art .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .album-card:hover .overlay { opacity: 1; }
+
+    .overlay-btn {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.4rem 0.9rem;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .album-rank {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: rgba(13,13,15,0.8);
+      padding: 2px 7px;
+    }
+
+    .album-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .album-artist {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stars { display: flex; gap: 2px; }
+    .star { color: var(--star); font-size: 11px; }
+    .star.empty { color: var(--surface2); }
+
+    /* RECENT REVIEWS */
+    .reviews-section { padding: 0 0 3rem; }
+
+    .review-list { display: flex; flex-direction: column; gap: 0; }
+
+    .review-item {
+      display: flex;
+      gap: 1.25rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .review-thumb {
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+
+    .review-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .review-body { flex: 1; }
+
+    .review-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .review-album {
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+
+    .review-artist {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .review-stars { display: flex; gap: 2px; margin-bottom: 6px; }
+
+    .review-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .review-user {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .review-user span { color: var(--accent2); }
+
+    /* LISTS */
+    .lists-section { padding: 0 0 3rem; }
+
+    .list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .list-card {
+      background: var(--surface);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .list-card:hover { background: var(--surface2); }
+
+    .list-covers {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 0.75rem;
+    }
+
+    .list-cover {
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .list-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+    .list-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .list-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .list-meta span { color: var(--accent2); }
+
+    /* RATE MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      width: 90%;
+      max-width: 420px;
+    }
+
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-stars {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .modal-star { color: var(--surface2); transition: color 0.15s; }
+    .modal-star.lit { color: var(--star); }
+
+    .modal textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 300;
+      padding: 0.75rem 1rem;
+      resize: none;
+      height: 100px;
+      outline: none;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal textarea:focus { border-color: rgba(200,169,110,0.4); }
+    .modal textarea::placeholder { color: var(--muted); }
+
+    .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+
+    .btn-cancel {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.25rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    /* PLACEHOLDER ARTS (colored blocks as stand-ins) */
+    .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+
+    /* MOBILE */
+    @media (max-width: 640px) {
+      .nav-inner { padding: 1rem 1.25rem; gap: 0.5rem; }
+      .nav-links { display: none; }
+      .search-bar { width: 140px; }
+      .search-bar input { font-size: 0.78rem; }
+      .page-wrap { padding: 0 1.25rem; }
+      .hero { padding: 3rem 0 2rem; }
+      .hero h1 { font-size: clamp(1.8rem, 8vw, 2.8rem); }
+      .hero p { font-size: 0.88rem; }
+      .hero-actions { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      .btn-primary { width: 100%; text-align: center; }
+      .album-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; }
+      .section-divider { margin-bottom: 1.25rem; }
+      .review-item { gap: 0.75rem; }
+      .review-thumb { width: 42px; height: 42px; }
+      .list-grid { grid-template-columns: 1fr; }
+      .modal { padding: 1.5rem; }
+      .nav-right { gap: 0.5rem; }
+      .btn-signin { padding: 0.4rem 0.75rem; font-size: 0.72rem; }
+      footer .footer-inner { flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+
+    @media (max-width: 400px) {
+      .search-bar { display: none; }
+      .nav-inner::after {
+        content: '⌕';
+        font-size: 1.1rem;
+        color: var(--muted);
+        cursor: pointer;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    .bell-btn { position: relative; background: transparent; border: 1px solid var(--border); color: var(--muted); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .bell-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bell-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: none; align-items: center; justify-content: center; }
+    .notif-panel { display: none; position: fixed; top: 64px; right: calc(50% - 430px + 2rem); width: 320px; background: var(--surface); border: 1px solid var(--border); z-index: 300; max-height: 420px; overflow-y: auto; }
+    .notif-panel.open { display: block; }
+    .notif-header { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+    .notif-clear { font-size: 0.7rem; color: var(--muted); cursor: pointer; transition: color 0.2s; }
+    .notif-clear:hover { color: var(--accent); }
+    .notif-item { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; display: flex; gap: 0.75rem; align-items: flex-start; }
+    .notif-item.unread { background: rgba(74,158,107,0.05); }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+    .notif-empty { padding: 2rem 1rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
+
+    .review-text-preview {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .like-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; padding: 3px 9px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .like-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
+
+    /* FEATURED SCROLL */
+    .featured-section { padding: 2rem 0 0; }
+    .featured-scroll-wrap { overflow-x: auto; scroll-snap-type: x mandatory; display: flex; gap: 0; cursor: grab; user-select: none; scrollbar-width: none; }
+    .featured-scroll-wrap::-webkit-scrollbar { display: none; }
+    .featured-scroll-wrap.dragging { cursor: grabbing; }
+    .featured-card {
+      display: flex; gap: 0; flex-shrink: 0; width: 100%;
+      scroll-snap-align: start; border-bottom: 1px solid var(--border);
+      background: var(--surface); overflow: hidden;
+    }
+    .featured-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .featured-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .featured-info { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+    .featured-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
+    .featured-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .featured-artist { font-size: 0.88rem; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
+    .featured-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .featured-chart { display: flex; align-items: flex-end; gap: 2px; height: 32px; margin: 0.75rem 0; }
+    .featured-bar { flex: 1; background: var(--star); opacity: 0.6; border-radius: 1px 1px 0 0; transition: height 0.5s cubic-bezier(0.4,0,0.2,1); }
+    .featured-bar.peak { opacity: 1; }
+    .featured-footer { display: flex; align-items: center; justify-content: space-between; }
+    .featured-avg { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--star); }
+    .featured-nav { display: flex; gap: 6px; }
+    .featured-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s; }
+    .featured-dot.active { background: var(--accent); }
+    .featured-view-btn { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 4px 12px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .featured-view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ENTRANCE ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .anim-fade-up   { opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .anim-fade-in   { opacity: 0; animation: fadeIn 0.7s ease forwards; }
+    .anim-slide-r   { opacity: 0; animation: slideRight 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .anim-scale-in  { opacity: 0; animation: scaleIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* stagger helpers */
+    .d1  { animation-delay: 0.05s; }
+    .d2  { animation-delay: 0.12s; }
+    .d3  { animation-delay: 0.2s; }
+    .d4  { animation-delay: 0.3s; }
+    .d5  { animation-delay: 0.42s; }
+    .d6  { animation-delay: 0.55s; }
+
+    /* hero text shimmer on the italic word */
+    .hero h1 em {
+      background: linear-gradient(90deg, var(--accent) 0%, #8fd4b0 50%, var(--accent) 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite 1s;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% center; }
+      to   { background-position: -200% center; }
+    }
+
+    /* section dividers slide in */
+    .section-divider { opacity: 0; animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* album cards pop in staggered */
+    .album-card { opacity: 0; animation: scaleIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* featured card slides in */
+    .featured-card { opacity: 0; animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* review items fade up */
+    .review-item { opacity: 0; animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* nav fades in */
+    .nav-inner { opacity: 0; animation: fadeIn 0.4s ease 0.05s forwards; }
+
+    /* ── ANIMATIONS ───────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(-14px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .anim-fade-up   { opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .anim-fade-in   { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+    .anim-slide-r   { opacity: 0; animation: slideRight 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .anim-scale-in  { opacity: 0; animation: scaleIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+    /* stagger delays */
+    .d1  { animation-delay: 0.08s; }
+    .d2  { animation-delay: 0.18s; }
+    .d3  { animation-delay: 0.28s; }
+    .d4  { animation-delay: 0.38s; }
+    .d5  { animation-delay: 0.48s; }
+    .d6  { animation-delay: 0.58s; }
+
+    /* scroll-triggered reveal */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal.d1 { transition-delay: 0.05s; }
+    .reveal.d2 { transition-delay: 0.12s; }
+    .reveal.d3 { transition-delay: 0.19s; }
+    .reveal.d4 { transition-delay: 0.26s; }
+
+    /* hero text shimmer on the italic word */
+    .hero h1 em {
+      background: linear-gradient(90deg, var(--accent) 0%, #8be8b0 40%, var(--accent) 80%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3.5s linear infinite 1s;
+    }
+    @keyframes shimmer {
+      from { background-position: 0% center; }
+      to   { background-position: 200% center; }
+    }
+
+    /* section divider line draw */
+    .section-divider .line {
+      transform-origin: left;
+      animation: none;
+    }
+    .section-divider.revealed .line {
+      animation: drawLine 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    @keyframes drawLine {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+
+    /* album card hover lift */
+    .album-card {
+      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease;
+    }
+    .album-card:hover { transform: translateY(-3px); }
+
+    /* featured card subtle entrance */
+    .featured-card { animation: scaleIn 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+
+    /* BUTTON SHINE */
+    .btn-primary {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -75%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      transform: skewX(-20deg);
+      animation: btnShine 3s ease-in-out infinite 1.5s;
+    }
+    @keyframes btnShine {
+      0%   { left: -75%; }
+      40%  { left: 125%; }
+      100% { left: 125%; }
+    }
+
+    /* HERO BACKGROUND WALLPAPER */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 0;
+    }
+    .hero-wrap .page-wrap { position: relative; z-index: 2; }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      grid-template-columns: repeat(12, 80px);
+      grid-template-rows: repeat(3, 80px);
+      gap: 4px;
+      opacity: 0.18;
+      animation: heroPan 40s linear infinite;
+      width: 200%;
+      top: -10px;
+    }
+
+    @keyframes heroPan {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .hero-bg-cell {
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .hero-bg-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* fade out left and right edges */
+    .hero-wrap::before,
+    .hero-wrap::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 120px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-wrap::before {
+      left: 0;
+      background: linear-gradient(to right, var(--bg), transparent);
+    }
+    .hero-wrap::after {
+      right: 0;
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+
+    /* fade bottom */
+    .hero-bg-fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: linear-gradient(to top, var(--bg), transparent);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-wrap .hero {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* HERO BACKGROUND */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 3px;
+      opacity: 0.12;
+      transform: rotate(-4deg) scale(1.15);
+      animation: bgScroll 40s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes bgScroll {
+      from { transform: rotate(-4deg) scale(1.15) translateX(0); }
+      to   { transform: rotate(-4deg) scale(1.15) translateX(-12.5%); }
+    }
+    .hero-bg-col { display: flex; flex-direction: column; gap: 3px; }
+    .hero-bg-col:nth-child(even) { margin-top: -40px; }
+    .hero-bg-block {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    /* fade edges */
+    .hero-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(to right, var(--bg) 0%, transparent 18%, transparent 82%, var(--bg) 100%),
+        linear-gradient(to bottom, transparent 0%, var(--bg) 85%);
+      pointer-events: none;
+    }
+    .hero { position: relative; z-index: 2; }
+
+    /* SHINE BUTTON */
+    .btn-primary { position: relative; overflow: hidden; }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.13) 50%, transparent 100%);
+      transform: skewX(-15deg);
+      animation: btnShine 4s ease-in-out infinite 2s;
+      pointer-events: none;
+    }
+    @keyframes btnShine {
+      0%   { left: -120%; }
+      45%  { left: 160%; }
+      100% { left: 160%; }
+    }
+
+    /* GLOWS */
+    /* accent glow behind logo */
+    .logo { text-shadow: 0 0 18px rgba(74,158,107,0.35); }
+
+    /* soft glow on Get started button */
+    .btn-primary { box-shadow: 0 0 16px rgba(74,158,107,0.25); }
+    .btn-primary:hover { box-shadow: 0 0 26px rgba(74,158,107,0.4); }
+
+    /* hero h1 italic glow */
+    .hero h1 em { filter: drop-shadow(0 0 10px rgba(74,158,107,0.4)); }
+
+    /* accent glow on nav username link */
+    #userEmail { text-shadow: 0 0 10px rgba(74,158,107,0.3); }
+
+    /* featured card title subtle glow */
+    .featured-title { text-shadow: 0 0 24px rgba(74,158,107,0.12); }
+
+    /* section divider h2 faint glow */
+    .section-divider h2 { text-shadow: 0 0 20px rgba(74,158,107,0.08); }
+
+    /* star color glow on avg rating */
+    .avg-num { text-shadow: 0 0 14px rgba(200,169,110,0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">Sound<span>trackd</span></div>
+      <div class="nav-links" id="navLinks">
+        <a href="#">Lists</a>
+        <a href="#">Charts</a>
+        <a href="members.html">Members</a>
+      </div>
+      <div class="nav-right">
+        <div class="search-bar" onclick="document.getElementById('navSearch').focus()">
+          <span class="search-icon">&#9906;</span>
+          <input type="text" id="navSearch" placeholder="Search..."
+            onkeydown="if(event.key==='Enter' && this.value.trim()) window.location.href='search.html?q='+encodeURIComponent(this.value.trim())" />
+        </div>
+        <button class="btn-signin" id="authBtn" onclick="openAuthModal('signin')">Log in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <button class="bell-btn" id="bellBtn" onclick="toggleNotifs()" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="bell-badge" id="bellBadge"></span>
+          </button>
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent);text-decoration:none;letter-spacing:0.03em" id="userEmail"></a>
+          <button class="btn-signin" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">Notifications<span class="notif-clear" onclick="markAllRead()">Mark all read</span></div>
+    <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
+  </div>
+
+  <!-- HERO WRAP -->
+  <div class="hero-wrap">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="page-wrap">
+      <section class="hero">
+        <p class="hero-eyebrow anim-slide-r d1">Social sound discovery</p>
+        <h1 class="anim-fade-up d2">Welcome to<br><em>Soundtrackd.</em></h1>
+        <p class="anim-fade-up d3">We're like Letterboxd for music. Share your opinions about the music you love and loathe. Make lists of albums and songs with your friends. Discover what the world thinks of a new album (and which songs in it are good). It all happens here.</p>
+        <div class="hero-actions anim-fade-up d4">
+          <button class="btn-primary" onclick="openAuthModal('signup')">Get started — it's free</button>
+          <button class="btn-ghost" onclick="window.location.href='search.html'">Explore music →</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+
+  <!-- FEATURED SCROLL -->
+  <section class="featured-section reveal">
+    <div class="section-divider" style="margin-bottom:1rem">
+      <h2>New from popular artists</h2>
+      <div class="line"></div>
+      <div class="featured-nav" id="featuredDots"></div>
+    </div>
+    <div class="featured-scroll-wrap" id="featuredScroll"></div>
+  </section>
+
+  <!-- START YOUR OPINION -->
+  <section class="trending-section reveal" style="padding-top:2.5rem">
+    <div class="section-divider">
+      <h2>Discuss your favorites</h2>
+      <div class="line"></div>
+    </div>
+    <div class="album-grid" id="albumGrid"></div>
+  </section>
+
+  <!-- RECENT REVIEWS -->
+  <section class="reviews-section reveal">
+    <div class="section-divider">
+      <h2>Recent reviews</h2>
+      <div class="line"></div>
+      <span class="see-all">See all →</span>
+    </div>
+    <div class="review-list" id="reviewList"></div>
+  </section>
+
+  <!-- LISTS -->
+  <section class="lists-section reveal">
+    <div class="section-divider">
+      <h2>Popular lists</h2>
+      <div class="line"></div>
+      <span class="see-all">See all →</span>
+    </div>
+    <div class="list-grid" id="listGrid"></div>
+  </section>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-overlay" id="authOverlay">
+    <div class="modal" style="max-width:380px">
+      <h3 id="authTitle">Welcome back</h3>
+      <div style="margin-bottom:1rem">
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none;margin-bottom:0.75rem" onkeydown="if(event.key==='Enter')submitAuth()" />
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Password</label>
+        <input id="authPassword" type="password" placeholder="••••••••" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none" onkeydown="if(event.key==='Enter')submitAuth()" />
+      </div>
+      <div id="usernameField" style="display:none;margin-bottom:1rem">
+        <label style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Screen name</label>
+        <input id="authUsername" type="text" placeholder="e.g. vinyl_moth" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.65rem 1rem;outline:none" onkeydown="if(event.key==='Enter')submitAuth()" />
+      </div>
+      <p id="authError" style="font-size:0.8rem;color:var(--danger);min-height:1.2em;margin-bottom:0.75rem"></p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAuthModal()">Cancel</button>
+        <button class="btn-primary" id="authSubmitBtn" onclick="submitAuth()">Sign in</button>
+      </div>
+      <p id="authToggleText" style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:1rem"></p>
+    </div>
+  </div>
+
+  <!-- RATE MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Rate & review</h3>
+      <div class="modal-stars" id="modalStars">
+        <span class="modal-star" data-i="1">&#9733;</span>
+        <span class="modal-star" data-i="2">&#9733;</span>
+        <span class="modal-star" data-i="3">&#9733;</span>
+        <span class="modal-star" data-i="4">&#9733;</span>
+        <span class="modal-star" data-i="5">&#9733;</span>
+      </div>
+      <textarea placeholder="Write a review... (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="closeModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers. Not affiliated with Spotify or any rights holders.</span>
+      <span style="color:var(--surface2);font-size:0.7rem;letter-spacing:0.08em">v0.09 pre-release</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    let currentUser = null;
+    let currentUsername = null;
+
+    async function initAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+      if (currentUser) {
+        await savePendingUsername(currentUser.id);
+        await loadUsername(currentUser.id);
+      }
+      updateNav();
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        currentUser = session?.user ?? null;
+        if (currentUser) {
+          await savePendingUsername(currentUser.id);
+          await loadUsername(currentUser.id);
+        } else {
+          currentUsername = null;
+        }
+        updateNav();
+      });
+    }
+
+    let _savingUsername = false;
+    async function savePendingUsername(userId) {
+      const pending = localStorage.getItem('pendingUsername');
+      if (!pending || _savingUsername) return;
+      _savingUsername = true;
+      const { data: existing } = await sb.from('profiles').select('id').eq('id', userId).single();
+      if (existing) {
+        localStorage.removeItem('pendingUsername');
+        _savingUsername = false;
+        return;
+      }
+      const { error } = await sb.from('profiles').insert({ id: userId, username: pending });
+      if (!error) localStorage.removeItem('pendingUsername');
+      _savingUsername = false;
+    }
+
+    async function loadUsername(userId) {
+      const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+      currentUsername = data?.username ?? null;
+    }
+
+    function updateNav() {
+      const btn = document.getElementById('authBtn');
+      const userInfo = document.getElementById('userInfo');
+      if (currentUser) {
+        btn.style.display = 'none';
+        userInfo.style.display = 'flex';
+        document.getElementById('userEmail').textContent = currentUsername || currentUser.email.split('@')[0];
+      } else {
+        btn.style.display = 'block';
+        userInfo.style.display = 'none';
+      }
+    }
+
+    let authMode = 'signin';
+
+    function openAuthModal(mode = 'signin') {
+      authMode = mode;
+      document.getElementById('authOverlay').classList.add('open');
+      document.getElementById('authError').textContent = '';
+      document.getElementById('authError').style.color = 'var(--danger)';
+      document.getElementById('authEmail').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authUsername').value = '';
+      renderAuthModal();
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authOverlay').classList.remove('open');
+    }
+
+    function renderAuthModal() {
+      document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Welcome back' : 'Create account';
+      document.getElementById('authSubmitBtn').textContent = authMode === 'signin' ? 'Sign in' : 'Sign up';
+      document.getElementById('usernameField').style.display = authMode === 'signup' ? 'block' : 'none';
+      document.getElementById('authToggleText').innerHTML = authMode === 'signin'
+        ? 'No account? <span style="color:var(--accent);cursor:pointer" onclick="switchAuthMode(\'signup\')">Sign up</span>'
+        : 'Already have one? <span style="color:var(--accent);cursor:pointer" onclick="switchAuthMode(\'signin\')">Sign in</span>';
+    }
+
+    function switchAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('authError').textContent = '';
+      renderAuthModal();
+    }
+
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const username = document.getElementById('authUsername').value.trim();
+      const errEl = document.getElementById('authError');
+      const btn = document.getElementById('authSubmitBtn');
+
+      if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+      if (authMode === 'signup' && !username) { errEl.textContent = 'Please choose a screen name.'; return; }
+      if (authMode === 'signup' && username.length < 3) { errEl.textContent = 'Screen name must be at least 3 characters.'; return; }
+
+      btn.textContent = 'Please wait...';
+      btn.disabled = true;
+
+      if (authMode === 'signin') {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        btn.disabled = false;
+        renderAuthModal();
+        if (error) errEl.textContent = error.message;
+        else closeAuthModal();
+      } else {
+        const { error } = await sb.auth.signUp({ email, password });
+        if (error) {
+          btn.disabled = false;
+          renderAuthModal();
+          errEl.textContent = error.message;
+          return;
+        }
+        localStorage.setItem('pendingUsername', username);
+        btn.disabled = false;
+        closeAuthModal();
+        errEl.style.color = 'var(--accent)';
+        document.getElementById('authError').textContent = '';
+        showBanner('Account created! Check your email to confirm, then come back and sign in.');
+      }
+    }
+
+    async function signOut() {
+      await sb.auth.signOut();
+      currentUsername = null;
+    }
+
+    function showBanner(msg) {
+      let b = document.getElementById('siteBanner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'siteBanner';
+        b.style = 'position:fixed;top:0;left:0;right:0;background:var(--accent);color:#0d0d0f;text-align:center;font-size:0.82rem;letter-spacing:0.04em;padding:0.6rem 1rem;z-index:999;font-weight:500';
+        document.body.prepend(b);
+      }
+      b.textContent = msg;
+      setTimeout(() => b.remove(), 6000);
+    }
+
+    const colors = ['#1a1a2e','#16213e','#1f2a38','#1e1a2e','#2a1f1f','#1a2a1a','#2a2218','#1f1f2a'];
+
+    // Spotify album IDs — these are the real IDs for each album
+    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+
+    async function getSpotifyToken() {
+      try {
+        const res = await fetch(WORKER_URL);
+        const data = await res.json();
+        return data.access_token;
+      } catch { return null; }
+    }
+
+    function populateHeroBg(albums) {
+      const bg = document.getElementById('heroBg');
+      if (!bg || !albums.length) return;
+      // Fill 36 cells (12 cols x 3 rows) x 2 for seamless loop
+      const cells = [];
+      for (let i = 0; i < 72; i++) {
+        const a = albums[i % albums.length];
+        cells.push(a.cover
+          ? `<div class="hero-bg-cell"><img src="${a.cover}" alt="" /></div>`
+          : `<div class="hero-bg-cell"></div>`
+        );
+      }
+      bg.innerHTML = cells.join('');
+    }
+
+    function renderAlbumGrid(albums) {
+      const grid = document.getElementById('albumGrid');
+      grid.innerHTML = '';
+      if (!albums.length) {
+        grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;grid-column:1/-1">Could not load albums right now.</p>';
+        return;
+      }
+      albums.forEach((a, i) => {
+        const delay = (0.05 + i * 0.06).toFixed(2);
+        grid.innerHTML += `
+          <a href="album.html?id=${a.id}" class="album-card" data-spotify-id="${a.id}" style="animation-delay:${delay}s">
+            <div class="album-art">
+              ${a.cover ? `<img src="${a.cover}" alt="${a.title}" />` : `<div class="ph">${a.title.slice(0,2).toUpperCase()}</div>`}
+              <div class="overlay"><span class="overlay-btn">View album</span></div>
+              <div class="album-rank">${i + 1}</div>
+            </div>
+            <div class="album-title">${a.title}</div>
+            <div class="album-artist">${a.artist}</div>
+          </a>`;
+      });
+    }
+
+    function renderSkeletons() {
+      const grid = document.getElementById('albumGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        grid.innerHTML += `
+          <div class="album-card">
+            <div class="album-art" style="animation:pulse 1.5s ease-in-out infinite"></div>
+            <div style="height:12px;background:var(--surface2);border-radius:2px;margin-bottom:6px;margin-top:0.75rem;animation:pulse 1.5s ease-in-out infinite"></div>
+            <div style="height:10px;background:var(--surface2);border-radius:2px;width:65%;animation:pulse 1.5s ease-in-out infinite"></div>
+          </div>`;
+      }
+    }
+
+    // Static opinion-starters — most talked about albums of all time
+    const OPINION_ALBUMS = [
+      { id: '4SZko61aMnmgvNhfhgTuD3', title: 'Graduation', artist: 'Kanye West', cover: '' },
+      { id: '7ycBtnsMtyVbbwTfJwRjSP', title: 'To Pimp a Butterfly', artist: 'Kendrick Lamar', cover: '' },
+      { id: '3mH6qwIy9crq0I9YQbOuDf', title: 'Blonde', artist: 'Frank Ocean', cover: '' },
+      { id: '4LH4d3cOWNNsVw41Gqt2kv', title: 'Funeral', artist: 'Arcade Fire', cover: '' },
+      { id: '6UcNnMGniYl5RObNbfesiY', title: 'Fetch the Bolt Cutters', artist: 'Fiona Apple', cover: '' },
+      { id: '6dVIqQ8qmQ5GBnJ9shOYGE', title: 'OK Computer', artist: 'Radiohead', cover: '' },
+      { id: '5zi7WsKlIiUXv09tbGLKsE', title: 'Hit Me Hard and Soft', artist: 'Billie Eilish', cover: '' },
+      { id: '6s84HNHmFNsNFLSPFqqhLQ', title: 'GNX', artist: 'Kendrick Lamar', cover: '' },
+    ];
+
+    // Featured scroll — newest from popular artists
+    const FEATURED_ARTISTS = [
+      { id: '06HL4z0CvFAxyc27GXpf02', desc: 'The reigning queen of pop, breaking records worldwide.' },
+      { id: '1Xyo4u8uXC1ZmMpatF05PJ', desc: 'Atmospheric R&B that defined a generation of late nights.' },
+      { id: '3TVXtAsR1Inumwj472S9r4', desc: 'Hip-hop's most prolific voice, constantly evolving.' },
+      { id: '4q3ewBCX7sLwd24euuV69X', desc: 'Latin trap's global ambassador, setting streaming records.' },
+      { id: '6s84HNHmFNsNFLSPFqqhLQ'.slice(0,22), desc: '' }, // placeholder
+    ];
+
+    let featuredAlbums = [];
+    let featuredIdx = 0;
+
+    async function loadTrendingAlbums() {
+      renderSkeletons();
+      const token = await getSpotifyToken();
+      if (!token) { renderAlbumGrid([]); return; }
+
+      try {
+        // Load opinion albums in one batch
+        const res = await fetch(
+          `https://api.spotify.com/v1/albums?ids=${OPINION_ALBUMS.map(a=>a.id).join(',')}&market=US`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        if (!res.ok) { renderAlbumGrid(OPINION_ALBUMS); return; }
+        const data = await res.json();
+        const albums = (data.albums || []).filter(Boolean).map(a => ({
+          id: a.id,
+          title: a.name,
+          artist: a.artists.map(x => x.name).join(', '),
+          cover: a.images?.[1]?.url || a.images?.[0]?.url,
+        }));
+        const toRender = albums.length ? albums : OPINION_ALBUMS;
+        renderAlbumGrid(toRender);
+        populateHeroBg(toRender);
+      } catch (e) {
+        renderAlbumGrid(OPINION_ALBUMS);
+      }
+
+      // Load featured scroll separately with slight delay
+      setTimeout(() => loadFeaturedScroll(token), 800);
+    }
+
+    async function loadFeaturedScroll(token) {
+      try {
+        const artistIds = ['06HL4z0CvFAxyc27GXpf02','1Xyo4u8uXC1ZmMpatF05PJ','3TVXtAsR1Inumwj472S9r4','4q3ewBCX7sLwd24euuV69X','66CXWjxzNUsdJxJ2JdwvnR','0du5cEVh5yTK9QJze8zA0C'];
+        const descs = [
+          'The reigning queen of pop, constantly rewriting the rulebook.',
+          'Atmospheric R&B that defined a generation of late nights.',
+          'Hip-hop's most prolific voice, always evolving.',
+          'Latin trap's global ambassador, breaking streaming records.',
+          'Thank u, next — pop's most powerful vocal.',
+          'The Weeknd's closest rival for moody midnight music.',
+        ];
+
+        const results = await Promise.all(
+          artistIds.map(id =>
+            fetch(`https://api.spotify.com/v1/artists/${id}/albums?limit=1&include_groups=album,single&market=US`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            }).then(r => r.ok ? r.json() : null).then(d => d?.items?.[0] || null).catch(() => null)
+          )
+        );
+
+        featuredAlbums = results.map((a, i) => a ? {
+          id: a.id,
+          title: a.name,
+          artist: a.artists.map(x => x.name).join(', '),
+          cover: a.images?.[0]?.url,
+          desc: descs[i],
+        } : null).filter(Boolean);
+
+        renderFeaturedScroll();
+      } catch(e) {}
+    }
+
+    function renderFeaturedScroll() {
+      const wrap = document.getElementById('featuredScroll');
+      const dots = document.getElementById('featuredDots');
+      if (!featuredAlbums.length) { wrap.style.display = 'none'; return; }
+
+      wrap.innerHTML = '';
+      dots.innerHTML = '';
+
+      featuredAlbums.forEach((a, i) => {
+        // Mini bar chart — random plausible distribution
+        const bars = [0.2,0.3,0.5,0.7,0.9,1,0.85,0.6,0.4,0.2].map(h =>
+          `<div class="featured-bar${h===1?' peak':''}" style="height:${Math.round(h*32)}px"></div>`
+        ).join('');
+
+        wrap.innerHTML += `
+          <div class="featured-card" id="fc-${i}">
+            <div class="featured-cover">
+              ${a.cover ? `<img src="${a.cover}" alt="${a.title}" />` : ''}
+            </div>
+            <div class="featured-info">
+              <div>
+                <div class="featured-label">New release</div>
+                <div class="featured-title">${a.title}</div>
+                <div class="featured-artist">${a.artist}</div>
+                <div class="featured-desc">${a.desc}</div>
+              </div>
+              <div>
+                <div class="featured-chart">${bars}</div>
+                <div class="featured-footer">
+                  <span class="featured-avg">—</span>
+                  <button class="featured-view-btn" onclick="window.location.href='album.html?id=${a.id}'">View album →</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+
+        const dot = document.createElement('div');
+        dot.className = 'featured-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => scrollToFeatured(i);
+        dots.appendChild(dot);
+      });
+
+      // Drag to scroll
+      let isDown = false, startX, scrollLeft;
+      wrap.addEventListener('mousedown', e => { isDown = true; wrap.classList.add('dragging'); startX = e.pageX - wrap.offsetLeft; scrollLeft = wrap.scrollLeft; });
+      wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
+      wrap.addEventListener('mouseup', () => { isDown = false; wrap.classList.remove('dragging'); });
+      wrap.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - wrap.offsetLeft; wrap.scrollLeft = scrollLeft - (x - startX); });
+      wrap.addEventListener('scroll', () => {
+        const idx = Math.round(wrap.scrollLeft / wrap.offsetWidth);
+        document.querySelectorAll('.featured-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
+      });
+
+      // Load real avg ratings from Supabase
+      featuredAlbums.forEach(async (a, i) => {
+        const { data } = await sb.from('ratings').select('rating').eq('album_id', a.id);
+        if (data && data.length) {
+          const avg = data.reduce((s,r) => s + parseFloat(r.rating), 0) / data.length;
+          const el = document.querySelector(`#fc-${i} .featured-avg`);
+          if (el) el.textContent = avg.toFixed(1);
+        }
+      });
+    }
+
+    function scrollToFeatured(idx) {
+      const wrap = document.getElementById('featuredScroll');
+      wrap.scrollTo({ left: idx * wrap.offsetWidth, behavior: 'smooth' });
+    }
+
+    // Refresh every 30 minutes while the tab is open
+    loadTrendingAlbums();
+    setInterval(loadTrendingAlbums, 30 * 60 * 1000);
+
+    async function loadRecentReviews() {
+      const rl = document.getElementById('reviewList');
+      const { data, error } = await sb.from('ratings')
+        .select('rating, review, album_id, created_at, user_id')
+        .not('review', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error || !data || data.length === 0) {
+        rl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:1.5rem 0">No reviews yet — be the first to rate something.</p>';
+        return;
+      }
+
+      // Fetch usernames separately
+      const userIds = [...new Set(data.map(r => r.user_id))];
+      const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+      const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+
+      // Fetch like counts
+      const reviewIds = data.map(r => r.id).filter(Boolean);
+      let likeCounts = {};
+      let myHomeLikes = new Set();
+      if (reviewIds.length) {
+        const { data: ld } = await sb.from('review_likes').select('rating_id').in('rating_id', reviewIds);
+        (ld || []).forEach(l => { likeCounts[l.rating_id] = (likeCounts[l.rating_id] || 0) + 1; });
+        if (currentUser) {
+          const { data: mld } = await sb.from('review_likes').select('rating_id').eq('user_id', currentUser.id).in('rating_id', reviewIds);
+          myHomeLikes = new Set((mld || []).map(l => l.rating_id));
+        }
+      }
+
+      rl.innerHTML = '';
+      data.forEach((r, idx) => {
+        const username = usernameMap[r.user_id] || 'anonymous';
+        const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        let stars = '';
+        for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
+        const isSpotifyId = /^[A-Za-z0-9]{22}$/.test(r.album_id);
+        const displayName = isSpotifyId ? r.album_id : r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
+        const liked = myHomeLikes.has(r.id);
+        const lc = likeCounts[r.id] || 0;
+        const canLike = currentUser && currentUser.id !== r.user_id && r.id;
+        const reviewDelay = (0.1 + idx * 0.08).toFixed(2);
+        rl.innerHTML += `
+          <div class="review-item" style="animation-delay:${reviewDelay}s">
+            <div class="review-thumb" style="background:var(--surface2)" id="rl-thumb-${idx}">
+              <div class="ph">${displayName.slice(0,2).toUpperCase()}</div>
+            </div>
+            <div class="review-body">
+              <div class="review-header">
+                <span class="review-album"><a href="album.html?id=${r.album_id}" style="color:var(--text)" id="rl-album-${idx}">${displayName}</a></span>
+              </div>
+              <div class="review-stars" style="display:flex;gap:2px;margin:3px 0">${stars}</div>
+              <div class="review-text-preview">${r.review}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+                <span style="font-size:0.75rem;color:var(--muted)"><span style="color:var(--accent2)">${username}</span> &nbsp;·&nbsp; ${date}</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${canLike ? `<button class="like-btn ${liked?'liked':''}" onclick="toggleHomeLike('${r.id}',this,${lc},${liked})">${liked?'♥':'♡'} <span>${lc||''}</span></button>` : lc > 0 ? `<span style="font-size:0.72rem;color:var(--muted)">♥ ${lc}</span>` : ''}
+                  <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Read →</a>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+
+      // Fetch real album names + covers from Spotify — delayed to avoid rate limit collision
+      const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
+      const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
+      if (!validEntries.length) return;
+
+      await new Promise(r => setTimeout(r, 1200));
+
+      try {
+        const token = await getSpotifyToken();
+        if (!token) return;
+        for (const { idx, id } of validEntries) {
+          try {
+            const res = await fetch(`https://api.spotify.com/v1/albums/${id}?market=US`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) continue;
+            const album = await res.json();
+            const nameEl = document.getElementById('rl-album-' + idx);
+            const thumbEl = document.getElementById('rl-thumb-' + idx);
+            if (nameEl && album.name) nameEl.textContent = album.name;
+            if (thumbEl && album.images?.[2]?.url) {
+              thumbEl.innerHTML = `<img src="${album.images[2].url}" style="width:100%;height:100%;object-fit:cover" />`;
+            }
+          } catch(e) { continue; }
+        }
+      } catch(e) {}
+    }
+
+    function starsHtml(n, size = 11) {
+      let s = '';
+      for (let i = 1; i <= 5; i++) {
+        s += `<span class="star${i > n ? ' empty' : ''}" style="font-size:${size}px">&#9733;</span>`;
+      }
+      return s;
+    }
+
+    function openModal(title) {
+      document.getElementById('modalTitle').textContent = 'Rate — ' + title;
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    loadRecentReviews();
+
+    // star interaction in modal
+    const modalStars = document.querySelectorAll('.modal-star');
+    let selectedRating = 0;
+
+    modalStars.forEach(star => {
+      star.addEventListener('mouseover', () => {
+        const i = +star.dataset.i;
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= i));
+      });
+      star.addEventListener('mouseout', () => {
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= selectedRating));
+      });
+      star.addEventListener('click', () => {
+        selectedRating = +star.dataset.i;
+        modalStars.forEach(s => s.classList.toggle('lit', +s.dataset.i <= selectedRating));
+      });
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('authOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeAuthModal();
+    });
+
+    async function loadNotifications() {
+      if (!currentUser) return;
+      const { data } = await sb.from('notifications')
+        .select('id, type, from_user_id, read, created_at')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      const unread = (data || []).filter(n => !n.read).length;
+      const badge = document.getElementById('bellBadge');
+      if (unread > 0) { badge.textContent = unread > 9 ? '9+' : unread; badge.style.display = 'flex'; }
+      else { badge.style.display = 'none'; }
+      const list = document.getElementById('notifList');
+      if (!data || data.length === 0) { list.innerHTML = '<div class="notif-empty">No notifications yet.</div>'; return; }
+
+      // Fetch usernames separately
+      const fromIds = [...new Set((data || []).map(n => n.from_user_id).filter(Boolean))];
+      const { data: nProfiles } = await sb.from('profiles').select('id, username').in('id', fromIds);
+      const nUsernameMap = Object.fromEntries((nProfiles || []).map(p => [p.id, p.username]));
+
+      list.innerHTML = '';
+      data.forEach(n => {
+        const username = nUsernameMap[n.from_user_id] || 'Someone';
+        const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const msg = n.type === 'follow' ? '<strong>' + username + '</strong> followed you' : n.type;
+        list.innerHTML += '<div class="notif-item ' + (n.read ? '' : 'unread') + '"><div class="notif-dot ' + (n.read ? 'read' : '') + '"></div><div style="flex:1"><div style="font-size:0.82rem">' + msg + '</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">' + date + '</div></div></div>';
+      });
+    }
+
+    function toggleNotifs() {
+      document.getElementById('notifPanel').classList.toggle('open');
+      markAllRead();
+    }
+
+    async function markAllRead() {
+      if (!currentUser) return;
+      await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
+      document.getElementById('bellBadge').style.display = 'none';
+    }
+
+    document.addEventListener('click', e => {
+      const panel = document.getElementById('notifPanel');
+      const bell = document.getElementById('bellBtn');
+      if (panel && !panel.contains(e.target) && bell && !bell.contains(e.target)) panel.classList.remove('open');
+    });
+
+    async function toggleHomeLike(reviewId, btn, currentCount, isLiked) {
+      if (!currentUser) return;
+      const countEl = btn.querySelector('span');
+      btn.disabled = true;
+      if (isLiked) {
+        await sb.from('review_likes').delete().eq('user_id', currentUser.id).eq('rating_id', reviewId);
+        btn.classList.remove('liked');
+        btn.childNodes[0].textContent = '♡ ';
+        const newCount = Math.max(0, currentCount - 1);
+        countEl.textContent = newCount || '';
+        btn.onclick = () => toggleHomeLike(reviewId, btn, newCount, false);
+      } else {
+        await sb.from('review_likes').insert({ user_id: currentUser.id, rating_id: reviewId });
+        btn.classList.add('liked');
+        btn.childNodes[0].textContent = '♥ ';
+        const newCount = currentCount + 1;
+        countEl.textContent = newCount;
+        btn.onclick = () => toggleHomeLike(reviewId, btn, newCount, true);
+      }
+      btn.disabled = false;
+    }
+
+    // Intersection observer — animate sections when they scroll into view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section-divider').forEach((el, i) => {
+      el.style.animationDelay = (i * 0.05) + 's';
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+
+    // ── SCROLL REVEAL ──────────────────────────────────
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Animate section divider line when section appears
+          const divider = entry.target.querySelector('.section-divider');
+          if (divider) {
+            setTimeout(() => divider.classList.add('revealed'), 100);
+          }
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+
+    // Hero background placeholder grid
+    (function() {
+      const bg = document.getElementById('heroBg');
+      if (!bg) return;
+      const colors = [
+        '#0f1a12','#111a0f','#0d1714','#131a10',
+        '#0a1510','#121f14','#0e1a0e','#101510',
+        '#162014','#0d1a10','#111e12','#0f1612',
+      ];
+      // 9 columns (one extra for seamless scroll)
+      for (let c = 0; c < 9; c++) {
+        const col = document.createElement('div');
+        col.className = 'hero-bg-col';
+        for (let r = 0; r < 6; r++) {
+          const block = document.createElement('div');
+          block.className = 'hero-bg-block';
+          const shade = colors[Math.floor(Math.random() * colors.length)];
+          const accent = Math.random() > 0.85;
+          block.style.background = accent ? 'rgba(74,158,107,0.15)' : shade;
+          col.appendChild(block);
+        }
+        bg.appendChild(col);
+      }
+    })();
+
+    initAuth();
+    // Load notifications after auth is ready
+    setTimeout(async () => { if (currentUser) await loadNotifications(); }, 500);
+  </script>
+</body>
+</html>
