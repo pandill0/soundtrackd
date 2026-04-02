@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0f0b; --surface: #0f1510; --surface2: #161e17; --border: rgba(255,255,255,0.07); --text: #e2e8e3; --muted: #5a6b5c; --accent: #4a9e6b; --accent2: #7c6fcd; --danger: #e05c5c; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    /* BG GRID */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px;
+      opacity: 0.08; transform: rotate(-4deg) scale(1.2);
+      animation: bgDrift 50s linear infinite; pointer-events: none;
+    }
+    @keyframes bgDrift { from { transform: rotate(-4deg) scale(1.2) translateX(0); } to { transform: rotate(-4deg) scale(1.2) translateX(-10%); } }
+    .bg-col { display: flex; flex-direction: column; gap: 3px; }
+    .bg-col:nth-child(even) { margin-top: -50px; }
+    .bg-block { width: 100%; aspect-ratio: 1; border-radius: 2px; }
+
+    /* EDGE FADES */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 100% 60% at 50% 50%, transparent 30%, var(--bg) 100%),
+        linear-gradient(to bottom, var(--bg) 0%, transparent 20%, transparent 80%, var(--bg) 100%);
+    }
+
+    /* CARD */
+    .login-card {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+      animation: cardIn 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* LOGO */
+    .card-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      text-shadow: 0 0 18px rgba(74,158,107,0.35);
+      margin-bottom: 0.25rem;
+      display: block;
+      text-decoration: none;
+    }
+    .card-logo span { font-style: italic; color: var(--text); }
+
+    .card-tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      animation: fadeUp 0.5s ease 0.15s both;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* TABS */
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.75rem;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+    .auth-tab {
+      flex: 1; text-align: center; padding: 0.7rem;
+      font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+      background: transparent; border-left: none; border-right: none; border-top: none;
+      font-family: 'Nunito', sans-serif; transition: all 0.2s; margin-bottom: -1px;
+    }
+    .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .auth-tab:hover { color: var(--text); }
+
+    /* FORM */
+    .form-group { margin-bottom: 1.1rem; animation: fadeUp 0.5s ease 0.25s both; }
+    .form-group:nth-child(2) { animation-delay: 0.32s; }
+    .form-group:nth-child(3) { animation-delay: 0.38s; }
+    .form-group:nth-child(4) { animation-delay: 0.44s; }
+
+    .field-label {
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); display: block; margin-bottom: 6px;
+    }
+    .field-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.9rem;
+      font-weight: 300; padding: 0.75rem 1rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus {
+      border-color: rgba(74,158,107,0.5);
+      box-shadow: 0 0 0 3px rgba(74,158,107,0.08);
+    }
+    .field-input::placeholder { color: var(--muted); }
+
+    .field-hint { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* SUBMIT */
+    .btn-submit {
+      width: 100%; padding: 0.85rem;
+      background: var(--accent); color: #0a0f0b;
+      border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; transition: opacity 0.2s;
+      position: relative; overflow: hidden;
+      margin-top: 0.5rem;
+      box-shadow: 0 0 16px rgba(74,158,107,0.25);
+      animation: fadeUp 0.5s ease 0.5s both;
+    }
+    .btn-submit:hover { opacity: 0.88; box-shadow: 0 0 26px rgba(74,158,107,0.4); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-submit::after {
+      content: ''; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.13) 50%, transparent 100%);
+      transform: skewX(-15deg); animation: shine 4s ease-in-out infinite 2s; pointer-events: none;
+    }
+    @keyframes shine { 0% { left: -120%; } 45% { left: 160%; } 100% { left: 160%; } }
+
+    /* STATUS */
+    .status-msg {
+      font-size: 0.8rem; min-height: 1.2em; margin-top: 0.75rem;
+      text-align: center; animation: fadeUp 0.3s ease both;
+    }
+    .status-msg.error { color: var(--danger); }
+    .status-msg.success { color: var(--accent); }
+
+    /* BACK LINK */
+    .back-link {
+      display: block; text-align: center; margin-top: 1.5rem;
+      font-size: 0.75rem; color: var(--muted); text-decoration: none;
+      transition: color 0.2s; animation: fadeUp 0.5s ease 0.55s both;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* DIVIDER */
+    .signup-only { display: none; }
+
+    @media (max-width: 480px) { .login-card { padding: 2rem 1.5rem; } }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid" id="bgGrid"></div>
+
+  <div class="login-card">
+    <a href="index.html" class="card-logo">Sound<span>trackd</span></a>
+    <p class="card-tagline">Social sound discovery.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchMode('signin')">Sign in</button>
+      <button class="auth-tab" onclick="switchMode('signup')">Create account</button>
+    </div>
+
+    <div class="form-group">
+      <label class="field-label">Email</label>
+      <input type="email" id="authEmail" class="field-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')submit()" />
+    </div>
+
+    <div class="form-group">
+      <label class="field-label">Password</label>
+      <input type="password" id="authPassword" class="field-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')submit()" />
+    </div>
+
+    <div class="form-group signup-only" id="usernameGroup">
+      <label class="field-label">Screen name</label>
+      <input type="text" id="authUsername" class="field-input" placeholder="e.g. vinyl_moth" maxlength="30" onkeydown="if(event.key==='Enter')submit()" />
+      <div class="field-hint">This cannot be changed after signup.</div>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submit()">Sign in</button>
+
+    <div class="status-msg" id="statusMsg"></div>
+    <a href="index.html" class="back-link">← Back to Soundtrackd</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    let mode = 'signin';
+
+    // ── background grid ──
+    (function() {
+      const grid = document.getElementById('bgGrid');
+      const colors = ['#0f1a12','#111a0f','#0d1714','#131a10','#0a1510','#121f14','#0e1a0e','#101510'];
+      for (let c = 0; c < 11; c++) {
+        const col = document.createElement('div');
+        col.className = 'bg-col';
+        for (let r = 0; r < 7; r++) {
+          const b = document.createElement('div');
+          b.className = 'bg-block';
+          b.style.background = Math.random() > 0.88 ? 'rgba(74,158,107,0.18)' : colors[Math.floor(Math.random() * colors.length)];
+          col.appendChild(b);
+        }
+        grid.appendChild(col);
+      }
+    })();
+
+    // ── check if already logged in ──
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) window.location.href = 'profile.html';
+    });
+
+    // ── check for ?mode= param ──
+    const urlMode = new URLSearchParams(window.location.search).get('mode');
+    if (urlMode === 'signup') switchMode('signup');
+
+    function switchMode(m) {
+      mode = m;
+      const isSignup = m === 'signup';
+      document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === !isSignup));
+      document.querySelectorAll('.signup-only').forEach(el => el.style.display = isSignup ? 'block' : 'none');
+      document.getElementById('submitBtn').textContent = isSignup ? 'Create account' : 'Sign in';
+      document.getElementById('statusMsg').textContent = '';
+      document.getElementById('statusMsg').className = 'status-msg';
+    }
+
+    async function submit() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const username = document.getElementById('authUsername').value.trim();
+      const statusEl = document.getElementById('statusMsg');
+      const btn = document.getElementById('submitBtn');
+
+      statusEl.textContent = '';
+      statusEl.className = 'status-msg';
+
+      if (!email || !password) { statusEl.textContent = 'Please fill in all fields.'; statusEl.className = 'status-msg error'; return; }
+      if (mode === 'signup' && !username) { statusEl.textContent = 'Please choose a screen name.'; statusEl.className = 'status-msg error'; return; }
+      if (mode === 'signup' && username.length < 3) { statusEl.textContent = 'Screen name must be at least 3 characters.'; statusEl.className = 'status-msg error'; return; }
+
+      btn.textContent = 'Please wait...'; btn.disabled = true;
+
+      if (mode === 'signin') {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+        if (error) { statusEl.textContent = error.message; statusEl.className = 'status-msg error'; return; }
+        window.location.href = 'profile.html';
+      } else {
+        const { error } = await sb.auth.signUp({ email, password });
+        btn.disabled = false;
+        btn.textContent = 'Create account';
+        if (error) { statusEl.textContent = error.message; statusEl.className = 'status-msg error'; return; }
+        localStorage.setItem('pendingUsername', username);
+        statusEl.textContent = 'Check your email to confirm your account, then sign in.';
+        statusEl.className = 'status-msg success';
+        setTimeout(() => switchMode('signin'), 2000);
+      }
+    }
+  </script>
+</body>
+</html>
