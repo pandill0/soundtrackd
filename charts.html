@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charts — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0f0b; --surface: #0f1510; --surface2: #161e17; --border: rgba(255,255,255,0.07); --text: #e2e8e3; --muted: #5a6b5c; --accent: #4a9e6b; --accent2: #7c6fcd; --star: #c8a96e; --danger: #e05c5c; }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    a { color: inherit; text-decoration: none; }
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,15,11,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1.5rem; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); flex-shrink: 0; }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+    .btn-nav { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem; position: relative; z-index: 1; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; margin-bottom: 4px; }
+    .page-header p { font-size: 0.85rem; color: var(--muted); }
+
+    /* TABS */
+    .chart-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+    .chart-tab { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.9rem 1.25rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; margin-bottom: -1px; background: transparent; border-left: none; border-right: none; border-top: none; font-family: 'Nunito', sans-serif; }
+    .chart-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .chart-tab:hover { color: var(--text); }
+
+    /* CHART ROWS */
+    .chart-list { display: flex; flex-direction: column; }
+    .chart-row { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .chart-row:hover { background: var(--surface); margin: 0 -1rem; padding: 0.9rem 1rem; }
+    .chart-rank { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--muted); width: 28px; text-align: right; flex-shrink: 0; }
+    .chart-rank.top3 { color: var(--star); }
+    .chart-cover { width: 52px; height: 52px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .chart-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .chart-info { flex: 1; min-width: 0; }
+    .chart-title { font-size: 0.92rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chart-artist { font-size: 0.78rem; color: var(--muted); }
+    .chart-right { text-align: right; flex-shrink: 0; }
+    .chart-score { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--star); }
+    .chart-count { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .chart-stars { display: flex; gap: 2px; justify-content: flex-end; margin-top: 2px; }
+    .star { color: var(--star); font-size: 10px; }
+    .star.empty { color: var(--surface2); }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty-icon { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--surface2); margin-bottom: 1rem; }
+
+    @keyframes pulse { 0%,100%{opacity:0.4}50%{opacity:0.8} }
+    .skel { background: var(--surface2); animation: pulse 1.5s ease-in-out infinite; }
+
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 4rem; font-size: 0.75rem; color: var(--muted); position: relative; z-index: 1; }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; }
+    .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
+    @media (max-width: 640px) { .page-wrap { padding: 1.5rem 1.25rem; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Sound<span>trackd</span></a>
+      <div class="nav-right">
+        <a href="index.html" style="font-size:0.82rem;color:var(--muted)">← Home</a>
+        <button class="btn-nav" id="authBtn" onclick="window.location.href='index.html'">Log in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent)" id="navUsername"></a>
+          <button class="btn-nav" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1>Charts</h1>
+      <p>What Soundtrackd thinks is worth your time.</p>
+    </div>
+
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="switchTab('rated', this)">Highest rated</button>
+      <button class="chart-tab" onclick="switchTab('reviewed', this)">Most reviewed</button>
+    </div>
+
+    <div class="chart-list" id="chartList">
+      <!-- skeletons -->
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient('https://cmjemqmxnpusluzyiwyj.supabase.co','sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41');
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+    let currentTab = 'rated';
+    let spotifyToken = null;
+
+    async function getToken() {
+      if (spotifyToken) return spotifyToken;
+      try { const r = await fetch(WORKER); const d = await r.json(); spotifyToken = d.access_token; return spotifyToken; } catch { return null; }
+    }
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      const user = session?.user ?? null;
+      if (user) {
+        document.getElementById('authBtn').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
+        const { data: p } = await sb.from('profiles').select('username').eq('id', user.id).single();
+        document.getElementById('navUsername').textContent = p?.username || user.email.split('@')[0];
+      }
+      renderSkeletons();
+      await loadChart();
+    }
+
+    function renderSkeletons() {
+      const list = document.getElementById('chartList');
+      list.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        list.innerHTML += `<div class="chart-row"><div class="skel" style="width:28px;height:16px;border-radius:2px"></div><div class="skel" style="width:52px;height:52px;flex-shrink:0"></div><div style="flex:1"><div class="skel" style="height:13px;width:60%;margin-bottom:6px;border-radius:2px"></div><div class="skel" style="height:11px;width:40%;border-radius:2px"></div></div></div>`;
+      }
+    }
+
+    function starsHtml(n) {
+      let s = '';
+      for (let i = 1; i <= 5; i++) {
+        if (n >= i) s += '<span class="star">&#9733;</span>';
+        else if (n >= i - 0.5) s += '<span style="position:relative;display:inline-block;font-size:10px"><span class="star empty">&#9733;</span><span class="star" style="position:absolute;left:0;top:0;width:50%;overflow:hidden">&#9733;</span></span>';
+        else s += '<span class="star empty">&#9733;</span>';
+      }
+      return s;
+    }
+
+    async function loadChart() {
+      const list = document.getElementById('chartList');
+
+      // Fetch all ratings grouped by album_id
+      const { data, error } = await sb.from('ratings').select('album_id, rating');
+      if (error || !data || !data.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">♪</div><p>No ratings yet.</p><p style="font-size:0.8rem;margin-top:4px">Be the first to rate something.</p></div>';
+        return;
+      }
+
+      // Aggregate by album
+      const albumMap = {};
+      data.forEach(r => {
+        if (!albumMap[r.album_id]) albumMap[r.album_id] = { total: 0, count: 0 };
+        albumMap[r.album_id].total += parseFloat(r.rating);
+        albumMap[r.album_id].count++;
+      });
+
+      let entries = Object.entries(albumMap).map(([id, v]) => ({
+        id, avg: v.total / v.count, count: v.count,
+        score: v.total / v.count,
+      }));
+
+      // Sort by current tab
+      if (currentTab === 'rated') {
+        entries = entries.filter(e => e.count >= 1).sort((a,b) => b.avg - a.avg || b.count - a.count);
+      } else {
+        entries = entries.sort((a,b) => b.count - a.count);
+      }
+
+      entries = entries.slice(0, 25);
+
+      // Render placeholders immediately
+      list.innerHTML = '';
+      entries.forEach((e, i) => {
+        list.innerHTML += `
+          <a href="album.html?id=${e.id}" class="chart-row" id="cr-${i}">
+            <div class="chart-rank ${i < 3 ? 'top3' : ''}">${i + 1}</div>
+            <div class="chart-cover" id="cc-${i}"></div>
+            <div class="chart-info">
+              <div class="chart-title" id="ct-${i}">${e.id}</div>
+              <div class="chart-artist" id="ca-${i}">—</div>
+            </div>
+            <div class="chart-right">
+              <div class="chart-score">${e.avg.toFixed(1)}</div>
+              <div class="chart-stars">${starsHtml(Math.round(e.avg * 2) / 2)}</div>
+              <div class="chart-count">${e.count} rating${e.count !== 1 ? 's' : ''}</div>
+            </div>
+          </a>`;
+      });
+
+      // Fetch names from Spotify
+      const validIds = entries.filter(e => /^[A-Za-z0-9]{22}$/.test(e.id)).map(e => e.id);
+      if (!validIds.length) return;
+      try {
+        const token = await getToken();
+        if (!token) return;
+        // Batch in 20s
+        for (let i = 0; i < validIds.length; i += 20) {
+          const chunk = validIds.slice(i, i + 20);
+          const res = await fetch(`https://api.spotify.com/v1/albums?ids=${chunk.join(',')}&market=US`, { headers: { 'Authorization': `Bearer ${token}` } });
+          const json = await res.json();
+          (json.albums || []).forEach(album => {
+            if (!album) return;
+            const idx = entries.findIndex(e => e.id === album.id);
+            if (idx === -1) return;
+            const titleEl = document.getElementById('ct-' + idx);
+            const artistEl = document.getElementById('ca-' + idx);
+            const coverEl = document.getElementById('cc-' + idx);
+            if (titleEl) titleEl.textContent = album.name;
+            if (artistEl) artistEl.textContent = album.artists.map(a => a.name).join(', ');
+            if (coverEl && album.images?.[2]?.url) coverEl.innerHTML = `<img src="${album.images[2].url}" />`;
+          });
+        }
+      } catch(e) {}
+    }
+
+    function switchTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderSkeletons();
+      loadChart();
+    }
+
+    async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+    init();
+  </script>
+</body>
+</html>
