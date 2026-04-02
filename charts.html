@@ -85,6 +85,7 @@
     <div class="chart-tabs">
       <button class="chart-tab active" onclick="switchTab('rated', this)">Highest rated</button>
       <button class="chart-tab" onclick="switchTab('reviewed', this)">Most reviewed</button>
+      <button class="chart-tab" onclick="switchTab('trending', this)">Trending this week</button>
     </div>
 
     <div class="chart-list" id="chartList">
@@ -104,6 +105,7 @@
     const { createClient } = supabase;
     const sb = createClient('https://cmjemqmxnpusluzyiwyj.supabase.co','sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41');
     const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+    const LASTFM_KEY = 'c04398910fb731d86c172d1a8e658d4a';
     let currentTab = 'rated';
     let spotifyToken = null;
 
@@ -225,7 +227,41 @@
       document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
       renderSkeletons();
-      loadChart();
+      if (tab === 'trending') loadLastFmTrending();
+      else loadChart();
+    }
+
+    async function loadLastFmTrending() {
+      const list = document.getElementById('chartList');
+      try {
+        const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=chart.getTopTracks&api_key=${LASTFM_KEY}&format=json&limit=25`);
+        const d = await r.json();
+        const tracks = d.tracks?.track || [];
+        if (!tracks.length) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-icon">♪</div><p>Could not load trending tracks.</p></div>';
+          return;
+        }
+        list.innerHTML = '';
+        tracks.forEach((t, i) => {
+          const cover = t.image?.find(img => img.size === 'extralarge')?.['#text'] || '';
+          const listeners = Number(t.listeners).toLocaleString();
+          list.innerHTML += `
+            <a href="search.html?q=${encodeURIComponent(t.name + ' ' + t.artist.name)}" class="chart-row">
+              <div class="chart-rank ${i < 3 ? 'top3' : ''}">${i + 1}</div>
+              <div class="chart-cover">${cover ? `<img src="${cover}" alt="${t.name}">` : ''}</div>
+              <div class="chart-info">
+                <div class="chart-title">${t.name}</div>
+                <div class="chart-artist">${t.artist.name}</div>
+              </div>
+              <div class="chart-right">
+                <div class="chart-score" style="font-size:0.8rem;color:var(--muted)">${listeners}</div>
+                <div class="chart-count">listeners</div>
+              </div>
+            </a>`;
+        });
+      } catch(e) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">♪</div><p>Could not load trending tracks.</p></div>';
+      }
     }
 
     async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }

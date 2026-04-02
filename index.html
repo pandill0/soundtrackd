@@ -1280,13 +1280,7 @@
       { id: '6s84HNHmFNsNFLSPFqqhLQ', title: 'GNX', artist: 'Kendrick Lamar', cover: '' },
     ];
 
-    // Featured scroll — newest from popular artists
-    const FEATURED_ARTISTS = [
-      { id: '06HL4z0CvFAxyc27GXpf02', desc: 'The reigning queen of pop, breaking records worldwide.' },
-      { id: '1Xyo4u8uXC1ZmMpatF05PJ', desc: 'Atmospheric R&B that defined a generation of late nights.' },
-      { id: '3TVXtAsR1Inumwj472S9r4', desc: 'Hip-hop\'s most prolific voice, constantly evolving.' },
-      { id: '4q3ewBCX7sLwd24euuV69X', desc: 'Latin trap\'s global ambassador, setting streaming records.' },
-    ];
+    const LASTFM_KEY = 'c04398910fb731d86c172d1a8e658d4a';
 
     let featuredAlbums = [];
     let featuredIdx = 0;
@@ -1329,7 +1323,7 @@
         renderAlbumGrid(toRender);
         populateHeroBg(toRender);
         // Load featured scroll after albums are done
-        setTimeout(() => loadFeaturedScrollCached(token), 400);
+        setTimeout(() => loadFeaturedScrollCached(), 400);
       } catch (e) {
         renderAlbumGrid(OPINION_ALBUMS);
         populateHeroBg(OPINION_ALBUMS);
@@ -1355,43 +1349,40 @@
         if (albums.length) setCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY, albums);
       } catch {}
       // Also refresh featured in background
-      setTimeout(() => loadFeaturedScrollCached(token), 400);
+      setTimeout(() => loadFeaturedScrollCached(), 400);
     }
 
-    async function loadFeaturedScrollCached(token) {
+    async function loadFeaturedScrollCached() {
       const cached = getCachedAlbums(FEATURED_KEY, FEATURED_EXP_KEY);
       if (cached && cached.length) { featuredAlbums = cached; renderFeaturedScroll(); return; }
-      await loadFeaturedScroll(token);
+      await loadFeaturedScroll();
     }
 
-    async function loadFeaturedScroll(token) {
+    async function loadFeaturedScroll() {
       try {
-        const artistIds = ['06HL4z0CvFAxyc27GXpf02','1Xyo4u8uXC1ZmMpatF05PJ','3TVXtAsR1Inumwj472S9r4','4q3ewBCX7sLwd24euuV69X','66CXWjxzNUsdJxJ2JdwvnR','0du5cEVh5yTK9QJze8zA0C'];
-        const descs = [
-          'The reigning queen of pop, constantly rewriting the rulebook.',
-          'Atmospheric R&B that defined a generation of late nights.',
-          'Hip-hop\'s most prolific voice, always evolving.',
-          'Latin trap\'s global ambassador, breaking streaming records.',
-          'Thank u, next — pop\'s most powerful vocal.',
-          'The Weeknd\'s closest rival for moody midnight music.',
-        ];
+        const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=chart.getTopArtists&api_key=${LASTFM_KEY}&format=json&limit=6`);
+        const d = await r.json();
+        const artists = d.artists?.artist || [];
 
-        const results = await Promise.all(
-          artistIds.map(id =>
-            fetch(`https://api.spotify.com/v1/artists/${id}/albums?limit=1&include_groups=album,single&market=US`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            }).then(r => r.ok ? r.json() : null).then(d => d?.items?.[0] || null).catch(() => null)
-          )
-        );
+        const results = await Promise.all(artists.map(async artist => {
+          try {
+            const ar = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getTopAlbums&artist=${encodeURIComponent(artist.name)}&api_key=${LASTFM_KEY}&format=json&limit=1`);
+            const ad = await ar.json();
+            const album = ad.topalbums?.album?.[0];
+            if (!album) return null;
+            const cover = album.image?.find(i => i.size === 'extralarge')?.['#text'] || '';
+            return {
+              id: null,
+              title: album.name,
+              artist: artist.name,
+              cover: cover || null,
+              desc: `${Number(artist.listeners).toLocaleString()} listeners this week`,
+              searchQ: encodeURIComponent(`${album.name} ${artist.name}`),
+            };
+          } catch { return null; }
+        }));
 
-        featuredAlbums = results.map((a, i) => a ? {
-          id: a.id,
-          title: a.name,
-          artist: a.artists.map(x => x.name).join(', '),
-          cover: a.images?.[0]?.url,
-          desc: descs[i],
-        } : null).filter(Boolean);
-
+        featuredAlbums = results.filter(Boolean);
         setCachedAlbums(FEATURED_KEY, FEATURED_EXP_KEY, featuredAlbums);
         renderFeaturedScroll();
       } catch(e) {}
@@ -1427,7 +1418,7 @@
                 <div class="featured-chart">${bars}</div>
                 <div class="featured-footer">
                   <span class="featured-avg">—</span>
-                  <button class="featured-view-btn" onclick="window.location.href='album.html?id=${a.id}'">View album →</button>
+                  <button class="featured-view-btn" onclick="window.location.href='search.html?q=${a.searchQ}'">Find album →</button>
                 </div>
               </div>
             </div>
