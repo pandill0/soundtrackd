@@ -537,8 +537,10 @@
       padding: 0 2rem;
       width: 100%;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
+      gap: 0.35rem;
+      text-align: center;
     }
 
     .footer-logo {
@@ -1164,44 +1166,16 @@
 
     const colors = ['#1a1a2e','#16213e','#1f2a38','#1e1a2e','#2a1f1f','#1a2a1a','#2a2218','#1f1f2a'];
 
-    // Spotify album IDs — these are the real IDs for each album
-    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
-
     // ── CACHING LAYER ─────────────────────────────────────
-    // How it works:
-    // 1. Token cache: Spotify tokens last 1 hour. We store the token + expiry
-    //    in sessionStorage so we only call the Worker once per browser session.
-    // 2. Album cache: The opinion grid data is stored in sessionStorage for
-    //    30 minutes. On repeat visits the grid renders instantly from cache
-    //    while a background refresh happens silently.
+    // Album cache stored in sessionStorage for 30 minutes.
+    // On repeat visits the grid renders instantly from cache
+    // while a background refresh happens silently.
 
-    const TOKEN_KEY = 'st_spotify_token';
-    const TOKEN_EXP_KEY = 'st_spotify_token_exp';
     const ALBUMS_KEY = 'st_opinion_albums';
     const ALBUMS_EXP_KEY = 'st_opinion_albums_exp';
     const FEATURED_KEY = 'st_featured_albums';
     const FEATURED_EXP_KEY = 'st_featured_albums_exp';
-    const TOKEN_TTL = 55 * 60 * 1000;    // 55 min (token lasts 60, we refresh early)
-    const ALBUMS_TTL = 30 * 60 * 1000;   // 30 min
-
-    async function getSpotifyToken() {
-      // Return cached token if still valid
-      const cached = sessionStorage.getItem(TOKEN_KEY);
-      const exp = parseInt(sessionStorage.getItem(TOKEN_EXP_KEY) || '0');
-      if (cached && Date.now() < exp) return cached;
-
-      // Fetch fresh token from Worker
-      try {
-        const res = await fetch(WORKER_URL);
-        const data = await res.json();
-        const token = data.access_token;
-        if (token) {
-          sessionStorage.setItem(TOKEN_KEY, token);
-          sessionStorage.setItem(TOKEN_EXP_KEY, Date.now() + TOKEN_TTL);
-        }
-        return token || null;
-      } catch { return null; }
-    }
+    const ALBUMS_TTL = 30 * 60 * 1000;
 
     function getCachedAlbums(key, expKey) {
       try {
@@ -1221,17 +1195,16 @@
 
     function populateHeroBg(albums) {
       const bg = document.getElementById('heroBg');
-      if (!bg || !albums.length) return;
-      // Fill 36 cells (12 cols x 3 rows) x 2 for seamless loop
-      const cells = [];
-      for (let i = 0; i < 72; i++) {
-        const a = albums[i % albums.length];
-        cells.push(a.cover
-          ? `<div class="hero-bg-cell"><img src="${a.cover}" alt="" /></div>`
-          : `<div class="hero-bg-cell"></div>`
-        );
-      }
-      bg.innerHTML = cells.join('');
+      if (!bg) return;
+      // Build a shuffled pool of 72 cells — repeat albums but shuffle so it doesn't look like a grid pattern
+      const withCovers = albums.filter(a => a.cover);
+      if (!withCovers.length) return;
+      const pool = [];
+      while (pool.length < 72) pool.push(...withCovers);
+      pool.sort(() => Math.random() - 0.5);
+      bg.innerHTML = pool.slice(0, 72).map(a =>
+        `<div class="hero-bg-cell"><img src="${a.cover}" alt="" loading="lazy" /></div>`
+      ).join('');
     }
 
     function renderAlbumGrid(albums) {
@@ -1243,7 +1216,7 @@
       }
       albums.forEach((a, i) => {
         grid.innerHTML += `
-          <a href="album.html?id=${a.id}" class="album-card" data-spotify-id="${a.id}">
+          <a href="album.html?id=${a.id}" class="album-card">
             <div class="album-art">
               ${a.cover ? `<img src="${a.cover}" alt="${a.title}" />` : `<div class="ph">${a.title.slice(0,2).toUpperCase()}</div>`}
               <div class="overlay"><span class="overlay-btn">View album</span></div>
@@ -1286,70 +1259,38 @@
     let featuredIdx = 0;
 
     async function loadTrendingAlbums() {
-      // Step 1: Show cached data instantly if available
       const cached = getCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY);
       if (cached && cached.length) {
         renderAlbumGrid(cached);
         populateHeroBg(cached);
-        // Still refresh in background but no skeleton flash
-        refreshAlbumsInBackground();
+        fetchAndRenderAlbums(true); // silent background refresh
         return;
       }
-
-      // Step 2: No cache — show skeletons and fetch
       renderSkeletons();
-      await fetchAndRenderAlbums();
+      await fetchAndRenderAlbums(false);
     }
 
-    async function fetchAndRenderAlbums() {
-      const token = await getSpotifyToken();
-      if (!token) { renderAlbumGrid(OPINION_ALBUMS); populateHeroBg(OPINION_ALBUMS); return; }
-
+    async function fetchAndRenderAlbums(silent) {
       try {
-        const res = await fetch(
-          `https://api.spotify.com/v1/albums?ids=${OPINION_ALBUMS.map(a=>a.id).join(',')}&market=US`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
+        const results = await Promise.all(
+          OPINION_ALBUMS.map(async a => {
+            try {
+              const r = await fetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(a.title + ' ' + a.artist)}&limit=1`);
+              const d = await r.json();
+              const hit = d.data?.[0];
+              if (!hit) return a;
+              return { id: String(hit.id), title: hit.title, artist: hit.artist.name, cover: hit.cover_medium };
+            } catch { return a; }
+          })
         );
-        if (!res.ok) throw new Error('bad response');
-        const data = await res.json();
-        const albums = (data.albums || []).filter(Boolean).map(a => ({
-          id: a.id,
-          title: a.name,
-          artist: a.artists.map(x => x.name).join(', '),
-          cover: a.images?.[1]?.url || a.images?.[0]?.url,
-        }));
-        const toRender = albums.length ? albums : OPINION_ALBUMS;
-        setCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY, toRender);
-        renderAlbumGrid(toRender);
-        populateHeroBg(toRender);
-        // Load featured scroll after albums are done
-        setTimeout(() => loadFeaturedScrollCached(), 400);
-      } catch (e) {
-        renderAlbumGrid(OPINION_ALBUMS);
-        populateHeroBg(OPINION_ALBUMS);
+        setCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY, results);
+        if (!silent) {
+          renderAlbumGrid(results);
+          populateHeroBg(results);
+        }
+      } catch {
+        if (!silent) { renderAlbumGrid(OPINION_ALBUMS); populateHeroBg(OPINION_ALBUMS); }
       }
-    }
-
-    async function refreshAlbumsInBackground() {
-      // Silent background refresh — doesn't show skeletons or disrupt the UI
-      const token = await getSpotifyToken();
-      if (!token) return;
-      try {
-        const res = await fetch(
-          `https://api.spotify.com/v1/albums?ids=${OPINION_ALBUMS.map(a=>a.id).join(',')}&market=US`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const albums = (data.albums || []).filter(Boolean).map(a => ({
-          id: a.id, title: a.name,
-          artist: a.artists.map(x => x.name).join(', '),
-          cover: a.images?.[1]?.url || a.images?.[0]?.url,
-        }));
-        if (albums.length) setCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY, albums);
-      } catch {}
-      // Also refresh featured in background
-      setTimeout(() => loadFeaturedScrollCached(), 400);
     }
 
     async function loadFeaturedScrollCached() {
@@ -1457,9 +1398,9 @@
       wrap.scrollTo({ left: idx * wrap.offsetWidth, behavior: 'smooth' });
     }
 
-    // Refresh every 30 minutes while the tab is open
+    // Load album grid and featured scroll independently so neither blocks the other
     loadTrendingAlbums();
-    // Cache refreshes automatically on next page load after 30 min TTL
+    loadFeaturedScrollCached();
 
     async function loadRecentReviews() {
       const rl = document.getElementById('reviewList');
@@ -1498,8 +1439,8 @@
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         let stars = '';
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
-        const isSpotifyId = /^[A-Za-z0-9]{22}$/.test(r.album_id);
-        const displayName = isSpotifyId ? r.album_id : r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
+        const displayName = '…';
+
         const liked = myHomeLikes.has(r.id);
         const lc = likeCounts[r.id] || 0;
         const canLike = currentUser && currentUser.id !== r.user_id && r.id;
@@ -1525,32 +1466,20 @@
           </div>`;
       });
 
-      // Fetch real album names + covers from Spotify — delayed to avoid rate limit collision
-      const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
-      const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
-      if (!validEntries.length) return;
-
-      await new Promise(r => setTimeout(r, 1200));
-
-      try {
-        const token = await getSpotifyToken();
-        if (!token) return;
-        for (const { idx, id } of validEntries) {
-          try {
-            const res = await fetch(`https://api.spotify.com/v1/albums/${id}?market=US`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) continue;
-            const album = await res.json();
-            const nameEl = document.getElementById('rl-album-' + idx);
-            const thumbEl = document.getElementById('rl-thumb-' + idx);
-            if (nameEl && album.name) nameEl.textContent = album.name;
-            if (thumbEl && album.images?.[2]?.url) {
-              thumbEl.innerHTML = `<img src="${album.images[2].url}" style="width:100%;height:100%;object-fit:cover" />`;
-            }
-          } catch(e) { continue; }
-        }
-      } catch(e) {}
+      // Fetch real album names + covers from Deezer
+      for (const [idx, r] of data.entries()) {
+        try {
+          const res = await fetch(`https://api.deezer.com/album/${r.album_id}`);
+          const album = await res.json();
+          if (!album.title) continue;
+          const nameEl = document.getElementById('rl-album-' + idx);
+          const thumbEl = document.getElementById('rl-thumb-' + idx);
+          if (nameEl) { nameEl.textContent = album.title; nameEl.href = `album.html?id=${album.id}`; }
+          if (thumbEl && album.cover_small) {
+            thumbEl.innerHTML = `<img src="${album.cover_small}" style="width:100%;height:100%;object-fit:cover" />`;
+          }
+        } catch { continue; }
+      }
     }
 
     function starsHtml(n, size = 11) {
