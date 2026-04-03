@@ -313,110 +313,64 @@
       return s;
     }
 
-    function msToMin(ms) {
-      const s = Math.floor(ms / 1000);
+    function secToMin(s) {
       return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     }
 
-    function totalRuntime(tracks) {
-      const ms = tracks.reduce((sum, t) => sum + t.duration_ms, 0);
-      const mins = Math.round(ms / 60000);
+    function totalRuntime(totalSeconds) {
+      const mins = Math.round(totalSeconds / 60);
+      if (mins >= 60) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return `${h}h ${m}m`;
+      }
       return `${mins} min`;
     }
 
-    // ── Spotify token via our serverless function ──────────
-    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
-
-    async function getSpotifyToken() {
-      try {
-        const res = await fetch(WORKER_URL);
-        const data = await res.json();
-        return data.access_token;
-      } catch {
-        return null;
-      }
-    }
-
-    // ── fetch album from Spotify ───────────────────────────
-    async function fetchAlbum(id, token) {
-      const res = await fetch(`https://api.spotify.com/v1/albums/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Album not found');
-      return res.json();
+    // ── fetch album from Deezer ────────────────────────────
+    async function fetchAlbumDeezer(id) {
+      const res = await fetch(`https://api.deezer.com/album/${id}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || 'Album not found');
+      return data;
     }
 
     // ── render album data into the page ───────────────────
     function renderAlbum(album) {
-      document.title = `${album.name} — ${album.artists[0].name} — Soundtrackd`;
+      document.title = `${album.title} — ${album.artist.name} — Soundtrackd`;
 
-      document.getElementById('albumType').textContent = album.album_type.charAt(0).toUpperCase() + album.album_type.slice(1);
-      document.getElementById('albumTitle').textContent = album.name;
-      document.getElementById('albumArtist').textContent = album.artists.map(a => a.name).join(', ');
-      document.getElementById('releaseDate').textContent = album.release_date.slice(0, 4);
+      document.getElementById('albumType').textContent = 'Album';
+      document.getElementById('albumTitle').textContent = album.title;
+      document.getElementById('albumArtist').textContent = album.artist.name;
       document.getElementById('albumLabel').textContent = album.label || '—';
-      document.getElementById('trackCount').textContent = `${album.total_tracks} tracks`;
+      document.getElementById('trackCount').textContent = `${album.nb_tracks} tracks`;
       document.getElementById('releaseDate').textContent = new Date(album.release_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      document.getElementById('albumRuntime').textContent = totalRuntime(album.duration);
 
-      const tracks = album.tracks.items;
-      document.getElementById('albumRuntime').textContent = totalRuntime(tracks);
-
-      const cover = album.images?.[0]?.url;
+      const cover = album.cover_xl || album.cover_big;
       if (cover) document.getElementById('coverImg').src = cover;
 
       // tracklist
+      const tracks = album.tracks.data;
       const tl = document.getElementById('tracklist');
       tracks.forEach((t, i) => {
-        const features = t.artists.slice(1).map(a => a.name).join(', ');
         tl.innerHTML += `
           <div class="track">
             <span class="track-num">${i + 1}</span>
-            <span class="track-name">
-              ${t.name}
-              ${features ? `<span class="track-feat">ft. ${features}</span>` : ''}
-            </span>
-            <span class="track-dur">${msToMin(t.duration_ms)}</span>
+            <span class="track-name">${t.title}</span>
+            <span class="track-dur">${secToMin(t.duration)}</span>
           </div>`;
       });
 
       // modal header
-      document.getElementById('modalAlbumTitle').textContent = album.name;
-      document.getElementById('modalAlbumSub').textContent = `${album.artists[0].name} · ${album.release_date.slice(0, 4)}`;
+      document.getElementById('modalAlbumTitle').textContent = album.title;
+      document.getElementById('modalAlbumSub').textContent = `${album.artist.name} · ${album.release_date.slice(0, 4)}`;
     }
 
-    // ── fallback: render static data (for before Spotify is wired) ──
-    function renderFallback(id) {
-      // Hardcoded fallback for Graduation so the page still works
-      if (id === '4SZko61aMnmgvNhfhgTuD3' || id === 'graduation') {
-        document.title = 'Graduation — Kanye West — Soundtrackd';
-        document.getElementById('albumTitle').textContent = 'Graduation';
-        document.getElementById('albumArtist').textContent = 'Kanye West';
-        document.getElementById('albumType').textContent = 'Album';
-        document.getElementById('releaseDate').textContent = 'September 11, 2007';
-        document.getElementById('albumLabel').textContent = 'Def Jam / Roc-A-Fella';
-        document.getElementById('albumRuntime').textContent = '51 min';
-        document.getElementById('trackCount').textContent = '13 tracks';
-        document.getElementById('modalAlbumTitle').textContent = 'Graduation';
-        document.getElementById('modalAlbumSub').textContent = 'Kanye West · 2007';
-        document.getElementById('coverImg').style.display = 'none';
-        document.getElementById('coverImg').parentElement.style.background = 'linear-gradient(135deg,#1a1060 0%,#e8a020 50%,#c0282c 100%)';
-
-        const tracks = [
-          ['Good Morning','','3:15'],['Champion','','2:47'],['Stronger','','5:11'],
-          ['I Wonder','','4:03'],['Good Life','T-Pain','3:28'],["Can't Tell Me Nothing",'','4:32'],
-          ['Barry Bonds','Lil Wayne','3:18'],['Drunk and Hot Girls','Mos Def','4:46'],
-          ['Flashing Lights','Dwele','4:00'],['Everything I Am','DJ Premier','3:57'],
-          ['The Glory','','3:35'],['Homecoming','Chris Martin','3:27'],['Big Brother','','4:05'],
-        ];
-        const tl = document.getElementById('tracklist');
-        tracks.forEach(([name, feat, dur], i) => {
-          tl.innerHTML += `<div class="track"><span class="track-num">${i+1}</span><span class="track-name">${name}${feat?` <span class="track-feat">ft. ${feat}</span>`:''}</span><span class="track-dur">${dur}</span></div>`;
-        });
-      } else {
-        document.getElementById('errorState').style.display = 'block';
-        document.getElementById('loadingState').style.display = 'none';
-        return;
-      }
+    // ── error state ────────────────────────────────────────
+    function renderError() {
+      document.getElementById('errorState').style.display = 'block';
+      document.getElementById('loadingState').style.display = 'none';
     }
 
     // ── ratings & reviews ──────────────────────────────────
@@ -715,29 +669,22 @@
     // ── main init ──────────────────────────────────────────
     async function init() {
       if (!ALBUM_ID) {
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('errorState').style.display = 'block';
+        renderError();
         return;
       }
 
       await initNav();
 
-      // Try Spotify first, fall back to static data
-      const token = await getSpotifyToken();
-      if (token) {
-        try {
-          const album = await fetchAlbum(ALBUM_ID, token);
-          albumData = album;
-          renderAlbum(album);
-        } catch {
-          renderFallback(ALBUM_ID);
-        }
-      } else {
-        renderFallback(ALBUM_ID);
+      try {
+        const album = await fetchAlbumDeezer(ALBUM_ID);
+        albumData = album;
+        renderAlbum(album);
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('albumContent').style.display = 'block';
+      } catch {
+        renderError();
+        return;
       }
-
-      document.getElementById('loadingState').style.display = 'none';
-      document.getElementById('albumContent').style.display = 'block';
 
       await loadRatings();
       await loadReviews();

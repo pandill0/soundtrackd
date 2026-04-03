@@ -104,15 +104,8 @@
   <script>
     const { createClient } = supabase;
     const sb = createClient('https://cmjemqmxnpusluzyiwyj.supabase.co','sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41');
-    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const LASTFM_KEY = 'c04398910fb731d86c172d1a8e658d4a';
     let currentTab = 'rated';
-    let spotifyToken = null;
-
-    async function getToken() {
-      if (spotifyToken) return spotifyToken;
-      try { const r = await fetch(WORKER); const d = await r.json(); spotifyToken = d.access_token; return spotifyToken; } catch { return null; }
-    }
 
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
@@ -196,30 +189,20 @@
           </a>`;
       });
 
-      // Fetch names from Spotify
-      const validIds = entries.filter(e => /^[A-Za-z0-9]{22}$/.test(e.id)).map(e => e.id);
-      if (!validIds.length) return;
-      try {
-        const token = await getToken();
-        if (!token) return;
-        // Batch in 20s
-        for (let i = 0; i < validIds.length; i += 20) {
-          const chunk = validIds.slice(i, i + 20);
-          const res = await fetch(`https://api.spotify.com/v1/albums?ids=${chunk.join(',')}&market=US`, { headers: { 'Authorization': `Bearer ${token}` } });
-          const json = await res.json();
-          (json.albums || []).forEach(album => {
-            if (!album) return;
-            const idx = entries.findIndex(e => e.id === album.id);
-            if (idx === -1) return;
-            const titleEl = document.getElementById('ct-' + idx);
-            const artistEl = document.getElementById('ca-' + idx);
-            const coverEl = document.getElementById('cc-' + idx);
-            if (titleEl) titleEl.textContent = album.name;
-            if (artistEl) artistEl.textContent = album.artists.map(a => a.name).join(', ');
-            if (coverEl && album.images?.[2]?.url) coverEl.innerHTML = `<img src="${album.images[2].url}" />`;
-          });
-        }
-      } catch(e) {}
+      // Fetch names + covers from Deezer
+      for (const [i, e] of entries.entries()) {
+        try {
+          const res = await fetch(`https://api.deezer.com/album/${e.id}`);
+          const album = await res.json();
+          if (album.error) continue;
+          const titleEl = document.getElementById('ct-' + i);
+          const artistEl = document.getElementById('ca-' + i);
+          const coverEl = document.getElementById('cc-' + i);
+          if (titleEl) titleEl.textContent = album.title;
+          if (artistEl) artistEl.textContent = album.artist?.name || '—';
+          if (coverEl && album.cover_small) coverEl.innerHTML = `<img src="${album.cover_small}" />`;
+        } catch { continue; }
+      }
     }
 
     function switchTab(tab, el) {

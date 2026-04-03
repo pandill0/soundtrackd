@@ -121,7 +121,7 @@
     </div>
 
     <div id="stateIdle" class="state-msg" style="padding:2rem 0;text-align:left">
-      <p style="color:var(--muted);font-size:0.88rem">Start typing to search the full Spotify catalogue.</p>
+      <p style="color:var(--muted);font-size:0.88rem">Start typing to search the full Deezer catalogue.</p>
     </div>
     <div id="stateLoading" class="state-msg" style="display:none"><div class="spinner"></div>Searching...</div>
     <div id="stateEmpty" class="state-msg" style="display:none">No results found.</div>
@@ -149,7 +149,6 @@
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
     );
 
-    const WORKER_URL = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     let searchType = 'album';
     let searchTimer = null;
 
@@ -175,40 +174,9 @@
       if (q.length > 1) doSearch();
     }
 
-    // ── spotify token ──
-    async function getToken() {
-      const res = await fetch(WORKER_URL);
-      const data = await res.json();
-      return data.access_token;
-    }
-
-    // ── search ──
-    async function doSearch() {
-      const q = document.getElementById('searchInput').value.trim();
-      if (!q) return;
-
-      setState('loading');
-      try {
-        const token = await getToken();
-
-        // Spotify search type must be 'album', 'track', or 'artist'
-        const typeMap = { album: 'album', track: 'track', artist: 'artist' };
-        const type = typeMap[searchType] || 'album';
-
-        const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}&limit=20&market=US`;
-        const res = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!res.ok) { setState('error'); return; }
-        const data = await res.json();
-
-        if (searchType === 'album') renderAlbums(data.albums?.items || [], q);
-        else if (searchType === 'track') renderTracks(data.tracks?.items || [], q);
-        else if (searchType === 'artist') renderArtists(data.artists?.items || [], q);
-      } catch (e) {
-        setState('error');
-      }
+    // ── helpers ──
+    function secToMin(s) {
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     }
 
     function setState(s) {
@@ -221,9 +189,25 @@
       }
     }
 
-    function msToMin(ms) {
-      const s = Math.floor(ms / 1000);
-      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    // ── search ──
+    async function doSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) return;
+
+      setState('loading');
+      try {
+        const typeEndpoint = { album: 'album', track: 'track', artist: 'artist' }[searchType] || 'album';
+        const url = `https://api.deezer.com/search/${typeEndpoint}?q=${encodeURIComponent(q)}&limit=20`;
+        const res = await fetch(url);
+        if (!res.ok) { setState('error'); return; }
+        const data = await res.json();
+
+        if (searchType === 'album') renderAlbums(data.data || [], q);
+        else if (searchType === 'track') renderTracks(data.data || [], q);
+        else if (searchType === 'artist') renderArtists(data.data || [], q);
+      } catch (e) {
+        setState('error');
+      }
     }
 
     function renderAlbums(items, q) {
@@ -237,16 +221,16 @@
       grid.style.display = 'grid';
       grid.innerHTML = '';
       filtered.forEach(album => {
-        const cover = album.images?.[1]?.url || album.images?.[0]?.url;
+        const cover = album.cover_medium;
         const year = album.release_date?.slice(0, 4) || '';
-        const artist = album.artists?.map(a => a.name).join(', ') || '';
+        const artist = album.artist?.name || '';
         grid.innerHTML += `
           <a href="album.html?id=${album.id}" class="album-card">
             <div class="album-art" style="background:var(--surface2)">
-              ${cover ? `<img src="${cover}" alt="${album.name}" />` : `<div class="ph">${album.name.slice(0,2).toUpperCase()}</div>`}
+              ${cover ? `<img src="${cover}" alt="${album.title}" />` : `<div class="ph">${album.title.slice(0,2).toUpperCase()}</div>`}
               <div class="overlay"><span class="overlay-btn">View</span></div>
             </div>
-            <div class="album-title">${album.name}</div>
+            <div class="album-title">${album.title}</div>
             <div class="album-artist">${artist}</div>
             <div class="album-year">${year}</div>
           </a>`;
@@ -264,18 +248,18 @@
       list.style.display = 'flex';
       list.innerHTML = '';
       filtered.forEach(track => {
-        const cover = track.album?.images?.[2]?.url || track.album?.images?.[0]?.url;
-        const artist = track.artists?.map(a => a.name).join(', ') || '';
+        const cover = track.album?.cover_small;
+        const artist = track.artist?.name || '';
         list.innerHTML += `
           <a href="album.html?id=${track.album.id}" class="track-item">
             <div class="track-thumb">
-              ${cover ? `<img src="${cover}" alt="${track.name}" />` : ''}
+              ${cover ? `<img src="${cover}" alt="${track.title}" />` : ''}
             </div>
             <div class="track-info">
-              <div class="track-name">${track.name}</div>
-              <div class="track-meta">${artist} &nbsp;·&nbsp; ${track.album.name}</div>
+              <div class="track-name">${track.title}</div>
+              <div class="track-meta">${artist} &nbsp;·&nbsp; ${track.album.title}</div>
             </div>
-            <div class="track-dur">${msToMin(track.duration_ms)}</div>
+            <div class="track-dur">${secToMin(track.duration)}</div>
           </a>`;
       });
     }
@@ -291,7 +275,7 @@
       grid.style.display = 'grid';
       grid.innerHTML = '';
       filtered.forEach(artist => {
-        const img = artist.images?.[1]?.url || artist.images?.[0]?.url;
+        const img = artist.picture_medium;
         grid.innerHTML += `
           <div class="album-card" onclick="searchArtistAlbums('${artist.id}', '${artist.name.replace(/'/g,"\\'")}')">
             <div class="album-art" style="background:var(--surface2);border-radius:50%;overflow:hidden">
@@ -306,13 +290,9 @@
     async function searchArtistAlbums(artistId, artistName) {
       setState('loading');
       try {
-        const token = await getToken();
-        const res = await fetch(
-          `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&limit=20`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
+        const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=20`);
         const data = await res.json();
-        renderAlbums(data.items || [], artistName);
+        renderAlbums(data.data || [], artistName);
       } catch { setState('error'); }
     }
 

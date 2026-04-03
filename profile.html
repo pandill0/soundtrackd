@@ -513,60 +513,22 @@
           </div>`;
       });
 
-      // Fetch real album names + covers from Spotify
-      // Spotify IDs are 22-character alphanumeric strings
-      const isSpotifyId = id => /^[A-Za-z0-9]{22}$/.test(id);
-
-      // Build a map of idx -> album_id for valid Spotify IDs only
-      const validEntries = data.map((r, idx) => ({ idx, id: r.album_id })).filter(e => isSpotifyId(e.id));
-
-      // Clean up display names for non-Spotify IDs (e.g. 'graduation' -> 'Graduation')
-      data.forEach((r, idx) => {
-        if (!isSpotifyId(r.album_id)) {
-          const nameEl = document.getElementById('albumname-' + idx);
-          if (nameEl) nameEl.textContent = r.album_id.replace(/-/g, ' ').replace(/\w/g, c => c.toUpperCase());
-        }
-      });
-
-      if (!validEntries.length) return;
-
-      // Retry token fetch up to 2 times
-      let token = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        token = await getSpotifyToken();
-        if (token) break;
-        await new Promise(r => setTimeout(r, 500));
-      }
-      if (!token) return;
-
+      // Fetch real album names + covers from Deezer
       try {
-        // Fetch each album individually to avoid batch null issues
-        for (const { idx, id } of validEntries) {
+        for (const [idx, r] of data.entries()) {
           try {
-            const res = await fetch(`https://api.spotify.com/v1/albums/${id}?market=US`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) continue;
+            const res = await fetch(`https://api.deezer.com/album/${r.album_id}`);
             const album = await res.json();
+            if (album.error) continue;
             const nameEl = document.getElementById('albumname-' + idx);
             const thumbEl = document.getElementById('thumb-' + idx);
-            if (nameEl && album.name) nameEl.textContent = album.name;
-            if (thumbEl && album.images?.[2]?.url) {
-              thumbEl.innerHTML = `<img src="${album.images[2].url}" style="width:100%;height:100%;object-fit:cover" />`;
-            } else if (thumbEl && album.images?.[0]?.url) {
-              thumbEl.innerHTML = `<img src="${album.images[0].url}" style="width:100%;height:100%;object-fit:cover" />`;
+            if (nameEl && album.title) nameEl.textContent = album.title;
+            if (thumbEl && album.cover_small) {
+              thumbEl.innerHTML = `<img src="${album.cover_small}" style="width:100%;height:100%;object-fit:cover" />`;
             }
           } catch(e) { continue; }
         }
       } catch(e) {}
-    }
-
-    async function getSpotifyToken() {
-      try {
-        const res = await fetch('https://throbbing-meadow-440e.spacedemon324.workers.dev');
-        const data = await res.json();
-        return data.access_token;
-      } catch { return null; }
     }
 
     // ── FOLLOW ─────────────────────────────────────────────
@@ -816,26 +778,23 @@
       section.style.display = 'block';
       renderFavorites();
 
-      // Fetch cover art for any stored favorites that have a Spotify ID
-      const toFetch = favorites.filter(f => f && f.id && /^[A-Za-z0-9]{22}$/.test(f.id));
+      // Fetch cover art for stored favorites from Deezer
+      const toFetch = favorites.filter(f => f && f.id);
       if (toFetch.length) {
         try {
-          const token = await getSpotifyToken();
-          if (!token) return;
-          const ids = toFetch.map(f => f.id).join(',');
-          const res = await fetch(`https://api.spotify.com/v1/albums?ids=${ids}&market=US`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const json = await res.json();
-          (json.albums || []).forEach(album => {
-            if (!album) return;
-            const idx = favorites.findIndex(f => f && f.id === album.id);
-            if (idx !== -1) {
-              favorites[idx].cover = album.images?.[1]?.url || album.images?.[0]?.url;
-              favorites[idx].name = album.name;
-              favorites[idx].artist = album.artists.map(a => a.name).join(', ');
-            }
-          });
+          await Promise.all(toFetch.map(async f => {
+            try {
+              const res = await fetch(`https://api.deezer.com/album/${f.id}`);
+              const album = await res.json();
+              if (album.error) return;
+              const idx = favorites.findIndex(fav => fav && fav.id === f.id);
+              if (idx !== -1) {
+                favorites[idx].cover = album.cover_medium;
+                favorites[idx].name = album.title;
+                favorites[idx].artist = album.artist?.name || '';
+              }
+            } catch(e) {}
+          }));
           renderFavorites();
         } catch(e) {}
       }
@@ -902,33 +861,29 @@
       const results = document.getElementById('pickerResults');
       results.innerHTML = '<div class="picker-empty">Searching...</div>';
       try {
-        const token = await getSpotifyToken();
-        if (!token) { results.innerHTML = '<div class="picker-empty">Could not connect to Spotify.</div>'; return; }
-        const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=album&limit=10&market=US`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(q)}&limit=10`);
         const json = await res.json();
-        const items = json.albums?.items || [];
+        const items = json.data || [];
         if (!items.length) { results.innerHTML = '<div class="picker-empty">No results found.</div>'; return; }
         results.innerHTML = '';
         items.forEach(album => {
-          const cover = album.images?.[2]?.url || album.images?.[0]?.url;
-          const artist = album.artists.map(a => a.name).join(', ');
+          const cover = album.cover_medium;
+          const artist = album.artist.name;
           const row = document.createElement('div');
           row.className = 'picker-result';
           row.innerHTML = `
             <div class="picker-thumb">${cover ? `<img src="${cover}" />` : ''}</div>
             <div>
-              <div class="picker-name">${album.name}</div>
+              <div class="picker-name">${album.title}</div>
               <div class="picker-artist">${artist} · ${album.release_date?.slice(0,4)}</div>
             </div>`;
-          row.onclick = () => selectFavorite(album.id, album.name, artist, album.images?.[1]?.url || album.images?.[0]?.url);
+          row.onclick = () => selectFavorite(album.id, album.title, artist, album.cover_medium);
           results.appendChild(row);
         });
-      } catch(e) { results.innerHTML = '<div class="picker-empty">Something went wrong.</div>'; }
+      } catch(e) { results.innerHTML = '<div class="picker-empty">Could not connect. Try again.</div>'; }
     }
 
-    async function selectFavorite(id, name, artist, cover) {
+        async function selectFavorite(id, name, artist, cover) {
       favorites[pickerSlotIdx] = { id, name, artist, cover };
       renderFavorites();
       closePicker();
