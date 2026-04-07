@@ -103,6 +103,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient('https://cmjemqmxnpusluzyiwyj.supabase.co','sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41');
     const LASTFM_KEY = 'c04398910fb731d86c172d1a8e658d4a';
     let currentTab = 'rated';
@@ -192,7 +193,7 @@
       // Fetch names + covers from Deezer
       for (const [i, e] of entries.entries()) {
         try {
-          const res = await fetch(`https://api.deezer.com/album/${e.id}`);
+          const res = await fetch(`${WORKER}/album/${e.id}`);
           const album = await res.json();
           if (album.error) continue;
           const titleEl = document.getElementById('ct-' + i);

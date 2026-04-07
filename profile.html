@@ -346,6 +346,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient(
       'https://cmjemqmxnpusluzyiwyj.supabase.co',
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
@@ -517,7 +518,7 @@
       try {
         for (const [idx, r] of data.entries()) {
           try {
-            const res = await fetch(`https://api.deezer.com/album/${r.album_id}`);
+            const res = await fetch(`${WORKER}/album/${r.album_id}`);
             const album = await res.json();
             if (album.error) continue;
             const nameEl = document.getElementById('albumname-' + idx);
@@ -784,7 +785,7 @@
         try {
           await Promise.all(toFetch.map(async f => {
             try {
-              const res = await fetch(`https://api.deezer.com/album/${f.id}`);
+              const res = await fetch(`${WORKER}/album/${f.id}`);
               const album = await res.json();
               if (album.error) return;
               const idx = favorites.findIndex(fav => fav && fav.id === f.id);
@@ -861,7 +862,7 @@
       const results = document.getElementById('pickerResults');
       results.innerHTML = '<div class="picker-empty">Searching...</div>';
       try {
-        const res = await fetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(q)}&limit=10`);
+        const res = await fetch(`${WORKER}/search/album?q=${encodeURIComponent(q)}&limit=10`);
         const json = await res.json();
         const items = json.data || [];
         if (!items.length) { results.innerHTML = '<div class="picker-empty">No results found.</div>'; return; }

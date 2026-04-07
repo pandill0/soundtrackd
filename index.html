@@ -1084,6 +1084,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient(
       'https://cmjemqmxnpusluzyiwyj.supabase.co',
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
@@ -1275,7 +1276,7 @@
         const results = await Promise.all(
           OPINION_ALBUMS.map(async a => {
             try {
-              const r = await fetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(a.title + ' ' + a.artist)}&limit=1`);
+              const r = await fetch(`${WORKER}/search/album?q=${encodeURIComponent(a.title + ' ' + a.artist)}&limit=1`);
               const d = await r.json();
               const hit = d.data?.[0];
               if (!hit) return a;
@@ -1469,7 +1470,7 @@
       // Fetch real album names + covers from Deezer
       for (const [idx, r] of data.entries()) {
         try {
-          const res = await fetch(`https://api.deezer.com/album/${r.album_id}`);
+          const res = await fetch(`${WORKER}/album/${r.album_id}`);
           const album = await res.json();
           if (!album.title) continue;
           const nameEl = document.getElementById('rl-album-' + idx);

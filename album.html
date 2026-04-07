@@ -280,6 +280,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient(
       'https://cmjemqmxnpusluzyiwyj.supabase.co',
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
@@ -329,7 +330,7 @@
 
     // ── fetch album from Deezer ────────────────────────────
     async function fetchAlbumDeezer(id) {
-      const res = await fetch(`https://api.deezer.com/album/${id}`);
+      const res = await fetch(`${WORKER}/album/${id}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error.message || 'Album not found');
       return data;

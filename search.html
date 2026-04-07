@@ -144,6 +144,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient(
       'https://cmjemqmxnpusluzyiwyj.supabase.co',
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
@@ -197,7 +198,7 @@
       setState('loading');
       try {
         const typeEndpoint = { album: 'album', track: 'track', artist: 'artist' }[searchType] || 'album';
-        const url = `https://api.deezer.com/search/${typeEndpoint}?q=${encodeURIComponent(q)}&limit=20`;
+        const url = `${WORKER}/search/${typeEndpoint}?q=${encodeURIComponent(q)}&limit=20`;
         const res = await fetch(url);
         if (!res.ok) { setState('error'); return; }
         const data = await res.json();
@@ -290,7 +291,7 @@
     async function searchArtistAlbums(artistId, artistName) {
       setState('loading');
       try {
-        const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=20`);
+        const res = await fetch(`${WORKER}/artist/${artistId}/albums?limit=20`);
         const data = await res.json();
         renderAlbums(data.data || [], artistName);
       } catch { setState('error'); }
