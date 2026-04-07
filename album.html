@@ -127,6 +127,19 @@
     .like-btn:hover { border-color: var(--accent); color: var(--accent); }
     .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
     .like-btn svg { width: 11px; height: 11px; }
+
+    /* TRACK RATINGS */
+    .track-trophy { width: 20px; flex-shrink: 0; text-align: center; font-size: 0.9rem; line-height: 1; }
+    .track-rating-wrap { position: relative; flex-shrink: 0; }
+    .track-rate-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.68rem; padding: 2px 8px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.15s; white-space: nowrap; letter-spacing: 0.04em; }
+    .track-rate-btn:hover { border-color: var(--accent); color: var(--text); }
+    .track-rate-btn.rated { border-color: transparent; background: transparent; color: var(--star); padding: 2px 4px; }
+    .track-rating-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border); padding: 10px 12px; z-index: 50; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,0.5); min-width: 130px; }
+    .track-rating-dropdown.open { display: block; }
+    .track-dropdown-stars { display: flex; gap: 4px; cursor: pointer; justify-content: center; }
+    .track-dropdown-star { font-size: 20px; color: var(--surface2); transition: color 0.08s; user-select: none; }
+    .track-dropdown-star.lit { color: var(--star); }
+    .track-dropdown-label { font-size: 0.68rem; color: var(--muted); margin-top: 6px; text-align: center; min-height: 1em; letter-spacing: 0.04em; }
   </style>
 </head>
 <body>
@@ -356,12 +369,28 @@
       const tracks = album.tracks.data;
       const tl = document.getElementById('tracklist');
       tracks.forEach((t, i) => {
+        const dropdownStars = [1,2,3,4,5].map(n =>
+          `<span class="track-dropdown-star" data-val="${n}"
+            onmouseover="hoverTrackStar('${t.id}',${n})"
+            onmouseout="unhoverTrackStar('${t.id}')"
+            onclick="rateTrack('${t.id}','${t.title.replace(/'/g,"\\'")}',${n})">★</span>`
+        ).join('');
         tl.innerHTML += `
-          <a href="song.html?id=${t.id}" class="track" style="display:flex;align-items:center;gap:1rem;padding:0.7rem 0.5rem;border-bottom:1px solid var(--border);transition:background 0.15s;border-radius:2px;text-decoration:none;color:inherit">
+          <div class="track" id="track-row-${t.id}">
+            <span class="track-trophy" id="trophy-${t.id}"></span>
             <span class="track-num">${i + 1}</span>
             <span class="track-name" style="flex:1;font-size:0.9rem">${t.title}</span>
+            <div class="track-rating-wrap">
+              <button class="track-rate-btn" id="track-btn-${t.id}" onclick="toggleTrackDropdown(event,'${t.id}')">
+                <span id="track-stars-${t.id}">Rate</span>
+              </button>
+              <div class="track-rating-dropdown" id="track-dropdown-${t.id}">
+                <div class="track-dropdown-stars" id="dropdown-stars-${t.id}">${dropdownStars}</div>
+                <div class="track-dropdown-label" id="dropdown-label-${t.id}">— select —</div>
+              </div>
+            </div>
             <span class="track-dur">${secToMin(t.duration)}</span>
-          </a>`;
+          </div>`;
       });
 
       // modal header
@@ -691,9 +720,108 @@
       }
 
       await loadRatings();
+      await loadTrackRatings();
       await loadReviews();
       if (currentUser) await loadMyRating();
     }
+
+    // ── track ratings ──────────────────────────────────────
+    const userTrackRatings = {};
+    const ratingLabels = { 1: 'bad', 2: 'ok', 3: 'decent', 4: 'great', 5: 'masterpiece' };
+
+    async function loadTrackRatings() {
+      if (!albumData) return;
+      const trackIds = albumData.tracks.data.map(t => String(t.id));
+      const { data } = await sb.from('track_ratings').select('track_id, rating, user_id').in('track_id', trackIds);
+      if (!data || data.length === 0) return;
+
+      // Community averages → trophies
+      const totals = {};
+      data.forEach(r => {
+        if (!totals[r.track_id]) totals[r.track_id] = { sum: 0, count: 0 };
+        totals[r.track_id].sum += parseFloat(r.rating);
+        totals[r.track_id].count++;
+      });
+      const sorted = Object.entries(totals)
+        .map(([id, { sum, count }]) => ({ id, avg: sum / count }))
+        .sort((a, b) => b.avg - a.avg);
+      ['🥇', '🥈', '🥉'].forEach((trophy, i) => {
+        if (sorted[i]) {
+          const el = document.getElementById('trophy-' + sorted[i].id);
+          if (el) el.textContent = trophy;
+        }
+      });
+
+      // User's own ratings
+      if (currentUser) {
+        data.filter(r => r.user_id === currentUser.id).forEach(r => {
+          userTrackRatings[r.track_id] = parseFloat(r.rating);
+          setTrackStarDisplay(r.track_id, parseFloat(r.rating));
+        });
+      }
+    }
+
+    function setTrackStarDisplay(trackId, rating) {
+      const starsEl = document.getElementById('track-stars-' + trackId);
+      const btn = document.getElementById('track-btn-' + trackId);
+      if (!starsEl) return;
+      starsEl.innerHTML = [1,2,3,4,5].map(n =>
+        `<span style="color:${n <= rating ? 'var(--star)' : 'rgba(255,255,255,0.15)'}">★</span>`
+      ).join('');
+      if (btn) btn.classList.add('rated');
+    }
+
+    function toggleTrackDropdown(e, trackId) {
+      e.stopPropagation();
+      if (!currentUser) { window.location.href = 'login.html'; return; }
+      const dropdown = document.getElementById('track-dropdown-' + trackId);
+      const isOpen = dropdown.classList.contains('open');
+      document.querySelectorAll('.track-rating-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen) {
+        dropdown.classList.add('open');
+        // Pre-fill stars to current rating
+        const cur = userTrackRatings[trackId] || 0;
+        litStars(trackId, cur);
+        const label = document.getElementById('dropdown-label-' + trackId);
+        if (label) label.textContent = cur ? ratingLabels[cur] || '— select —' : '— select —';
+      }
+    }
+
+    function litStars(trackId, upTo) {
+      document.querySelectorAll(`#dropdown-stars-${trackId} .track-dropdown-star`).forEach(s => {
+        s.classList.toggle('lit', parseInt(s.dataset.val) <= upTo);
+      });
+    }
+
+    function hoverTrackStar(trackId, val) {
+      litStars(trackId, val);
+      const label = document.getElementById('dropdown-label-' + trackId);
+      if (label) label.textContent = ratingLabels[val] || '';
+    }
+
+    function unhoverTrackStar(trackId) {
+      const cur = userTrackRatings[trackId] || 0;
+      litStars(trackId, cur);
+      const label = document.getElementById('dropdown-label-' + trackId);
+      if (label) label.textContent = cur ? ratingLabels[cur] || '— select —' : '— select —';
+    }
+
+    async function rateTrack(trackId, title, rating) {
+      if (!currentUser) return;
+      document.getElementById('track-dropdown-' + trackId)?.classList.remove('open');
+      userTrackRatings[trackId] = rating;
+      setTrackStarDisplay(trackId, rating);
+      const cover = albumData?.cover_small || null;
+      await sb.from('track_ratings').upsert({
+        track_id: String(trackId), user_id: currentUser.id,
+        rating, track_title: title, track_cover: cover,
+      }, { onConflict: 'track_id,user_id' });
+      await loadTrackRatings(); // refresh trophies
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.track-rating-dropdown.open').forEach(d => d.classList.remove('open'));
+    });
 
     init();
   </script>
