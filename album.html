@@ -727,7 +727,7 @@
 
     // ── track ratings ──────────────────────────────────────
     const userTrackRatings = {};
-    const ratingLabels = { 1: 'bad', 2: 'ok', 3: 'decent', 4: 'great', 5: 'masterpiece' };
+    const trackRatingLabels = { 1: 'bad', 2: 'ok', 3: 'decent', 4: 'great', 5: 'masterpiece' };
 
     async function loadTrackRatings() {
       if (!albumData) return;
@@ -783,7 +783,7 @@
         const cur = userTrackRatings[trackId] || 0;
         litStars(trackId, cur);
         const label = document.getElementById('dropdown-label-' + trackId);
-        if (label) label.textContent = cur ? ratingLabels[cur] || '— select —' : '— select —';
+        if (label) label.textContent = cur ? trackRatingLabels[cur] || '— select —' : '— select —';
       }
     }
 
@@ -796,14 +796,14 @@
     function hoverTrackStar(trackId, val) {
       litStars(trackId, val);
       const label = document.getElementById('dropdown-label-' + trackId);
-      if (label) label.textContent = ratingLabels[val] || '';
+      if (label) label.textContent = trackRatingLabels[val] || '';
     }
 
     function unhoverTrackStar(trackId) {
       const cur = userTrackRatings[trackId] || 0;
       litStars(trackId, cur);
       const label = document.getElementById('dropdown-label-' + trackId);
-      if (label) label.textContent = cur ? ratingLabels[cur] || '— select —' : '— select —';
+      if (label) label.textContent = cur ? trackRatingLabels[cur] || '— select —' : '— select —';
     }
 
     async function rateTrack(trackId, title, rating) {
