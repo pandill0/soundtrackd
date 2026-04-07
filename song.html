@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Album — Soundtrackd</title>
+  <title>Song — Soundtrackd</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,21 +22,23 @@
 
     .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
 
-    /* LOADING / ERROR */
     .state-msg { padding: 6rem 0; text-align: center; color: var(--muted); font-size: 0.9rem; }
     .spinner { width: 28px; height: 28px; border: 2px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ALBUM HERO */
-    .album-hero { display: flex; gap: 2.5rem; padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); align-items: flex-start; }
-    .album-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
-    .album-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .album-meta { flex: 1; min-width: 0; }
-    .album-type { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
-    .album-title { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.4rem; }
-    .album-artist { font-size: 1rem; color: var(--accent); margin-bottom: 1rem; font-weight: 500; }
-    .album-details { font-size: 0.8rem; color: var(--muted); display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-    .album-details span { display: flex; align-items: center; gap: 5px; }
+    /* SONG HERO */
+    .song-hero { display: flex; gap: 2.5rem; padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .song-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; position: relative; }
+    .song-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .song-cover-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 5px 8px; text-align: center; }
+    .song-meta { flex: 1; min-width: 0; }
+    .song-type { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .song-title { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.4rem; }
+    .song-artist { font-size: 1rem; color: var(--accent); margin-bottom: 1rem; font-weight: 500; }
+    .song-details { font-size: 0.8rem; color: var(--muted); display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .song-details span { display: flex; align-items: center; gap: 5px; }
+    .song-album-link { color: var(--accent2); transition: opacity 0.2s; }
+    .song-album-link:hover { opacity: 0.8; }
 
     .community-rating { display: flex; align-items: stretch; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); }
     .avg-left { display: flex; flex-direction: column; justify-content: center; min-width: 70px; }
@@ -47,7 +49,7 @@
     .star.empty { color: var(--surface2); }
     .rating-count { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
     .rating-divider { width: 1px; background: var(--border); flex-shrink: 0; }
-    .rating-chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 0; }
+    .rating-chart { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
     .chart-bars-wrap { display: flex; align-items: flex-end; gap: 3px; height: 64px; }
     .chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
     .chart-bar-v { width: 100%; background: var(--star); opacity: 0.55; border-radius: 2px 2px 0 0; height: 0; transition: height 0.55s cubic-bezier(0.4,0,0.2,1); }
@@ -65,14 +67,13 @@
     .section-divider h2 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 400; white-space: nowrap; }
     .section-divider .line { flex: 1; height: 1px; background: var(--border); }
 
-    /* TRACKLIST */
-    .tracklist { display: flex; flex-direction: column; }
-    .track { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; border-radius: 2px; }
-    .track:hover { background: var(--surface); }
-    .track-num { font-size: 0.75rem; color: var(--muted); width: 22px; text-align: right; flex-shrink: 0; }
-    .track-name { flex: 1; font-size: 0.9rem; font-weight: 400; }
-    .track-feat { font-size: 0.78rem; color: var(--muted); }
-    .track-dur { font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+    /* LYRICS */
+    .lyrics-wrap { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem 1.75rem; margin-bottom: 0.5rem; }
+    .lyrics-text { font-size: 0.9rem; color: var(--muted); line-height: 2; white-space: pre-wrap; max-height: 320px; overflow: hidden; transition: max-height 0.4s ease; }
+    .lyrics-text.expanded { max-height: 9999px; }
+    .lyrics-toggle { margin-top: 1rem; font-size: 0.75rem; color: var(--accent); cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; background: none; border: none; font-family: 'Nunito', sans-serif; padding: 0; }
+    .lyrics-toggle:hover { opacity: 0.8; }
+    .lyrics-source { font-size: 0.68rem; color: var(--muted); margin-top: 0.75rem; opacity: 0.6; }
 
     /* REVIEWS */
     .review-list { display: flex; flex-direction: column; }
@@ -82,9 +83,12 @@
     .review-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 4px; flex-wrap: wrap; }
     .review-user { font-size: 0.85rem; font-weight: 500; color: var(--accent); }
     .review-stars { display: flex; gap: 2px; }
-    .review-text { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    .review-text-preview { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
     .review-date { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
     .empty-reviews { padding: 2.5rem 0; color: var(--muted); font-size: 0.88rem; }
+    .review-tab { font-family: 'Nunito', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.85rem 1.25rem; cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+    .review-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .review-tab:hover { color: var(--text); }
 
     /* MODAL */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
@@ -109,24 +113,6 @@
     footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 4rem; font-size: 0.75rem; color: var(--muted); }
     .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
     .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
-
-    .review-text-preview {
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      font-size: 0.85rem;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    .review-tab { font-family: 'Nunito', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.85rem 1.25rem; cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
-    .review-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .review-tab:hover { color: var(--text); }
-    .like-btn { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; padding: 3px 9px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; border-radius: 2px; }
-    .like-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(74,158,107,0.08); }
-    .like-btn svg { width: 11px; height: 11px; }
   </style>
 </head>
 <body>
@@ -135,8 +121,8 @@
     <div class="nav-inner">
       <a href="index.html" class="logo">Sound<span>trackd</span></a>
       <div class="nav-right">
-        <a href="index.html" style="font-size:0.82rem;color:var(--muted);letter-spacing:0.03em">← Back</a>
-        <button class="btn-nav" id="authBtn" onclick="window.location.href='index.html'">Sign in</button>
+        <a href="javascript:history.back()" style="font-size:0.82rem;color:var(--muted);letter-spacing:0.03em">← Back</a>
+        <button class="btn-nav" id="authBtn" onclick="window.location.href='login.html'">Sign in</button>
         <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
           <a href="profile.html" style="font-size:0.82rem;color:var(--accent)" id="navUsername"></a>
           <button class="btn-nav" onclick="signOut()">Sign out</button>
@@ -147,42 +133,38 @@
 
   <div class="page-wrap">
 
-    <!-- LOADING STATE -->
     <div id="loadingState" class="state-msg">
       <div class="spinner"></div>
-      Loading album...
+      Loading song...
     </div>
 
-    <!-- ERROR STATE -->
     <div id="errorState" class="state-msg" style="display:none">
-      Couldn't load this album. <a href="index.html" style="color:var(--accent)">Go home</a>
+      Couldn't load this song. <a href="index.html" style="color:var(--accent)">Go home</a>
     </div>
 
-    <!-- ALBUM CONTENT (hidden until loaded) -->
-    <div id="albumContent" style="display:none">
+    <div id="songContent" style="display:none">
 
-      <div class="album-hero">
-        <div class="album-cover"><img id="coverImg" src="" alt="" /></div>
-        <div class="album-meta">
-          <div class="album-type" id="albumType">Album</div>
-          <div class="album-title" id="albumTitle"></div>
-          <div class="album-artist" id="albumArtist"></div>
-          <div class="album-details">
+      <div class="song-hero">
+        <div class="song-cover">
+          <a id="coverLink" href="#"><img id="coverImg" src="" alt="" /></a>
+          <div class="song-cover-label">View album</div>
+        </div>
+        <div class="song-meta">
+          <div class="song-type">Song</div>
+          <div class="song-title" id="songTitle"></div>
+          <div class="song-artist" id="songArtist"></div>
+          <div class="song-details">
             <span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span id="releaseDate"></span>
-            </span>
-            <span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-              <span id="albumLabel"></span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              From <a id="songAlbumLink" class="song-album-link" href="#" style="margin-left:4px"></a>
             </span>
             <span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span id="albumRuntime"></span>
+              <span id="songDuration"></span>
             </span>
             <span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-              <span id="trackCount"></span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="songYear"></span>
             </span>
           </div>
 
@@ -194,7 +176,7 @@
               <div class="avg-label" style="margin-top:4px">Community</div>
             </div>
             <div class="rating-divider"></div>
-            <div class="rating-chart" id="ratingChart">
+            <div class="rating-chart">
               <div class="chart-bars-wrap" id="chartBarsWrap">
                 <div class="chart-col"><div class="chart-bar-v" id="bar05"></div></div>
                 <div class="chart-col"><div class="chart-bar-v" id="bar1"></div></div>
@@ -208,41 +190,40 @@
                 <div class="chart-col"><div class="chart-bar-v" id="bar5"></div></div>
               </div>
               <div class="chart-labels">
-                <div class="chart-label-v">½</div>
-                <div class="chart-label-v">1</div>
-                <div class="chart-label-v">1½</div>
-                <div class="chart-label-v">2</div>
-                <div class="chart-label-v">2½</div>
-                <div class="chart-label-v">3</div>
-                <div class="chart-label-v">3½</div>
-                <div class="chart-label-v">4</div>
-                <div class="chart-label-v">4½</div>
-                <div class="chart-label-v">5</div>
+                <div class="chart-label-v">½</div><div class="chart-label-v">1</div>
+                <div class="chart-label-v">1½</div><div class="chart-label-v">2</div>
+                <div class="chart-label-v">2½</div><div class="chart-label-v">3</div>
+                <div class="chart-label-v">3½</div><div class="chart-label-v">4</div>
+                <div class="chart-label-v">4½</div><div class="chart-label-v">5</div>
               </div>
             </div>
           </div>
 
           <div class="rate-row">
-            <button class="btn-rate" onclick="openRateModal()">Rate this album</button>
+            <button class="btn-rate" onclick="openRateModal()">Rate this song</button>
             <button class="btn-ghost" id="myRatingBtn" style="display:none"></button>
           </div>
         </div>
       </div>
 
-      <div class="section-divider"><h2>Tracklist</h2><div class="line"></div></div>
-      <div class="tracklist" id="tracklist"></div>
+      <!-- LYRICS -->
+      <div id="lyricsSection" style="display:none">
+        <div class="section-divider"><h2>Lyrics</h2><div class="line"></div></div>
+        <div class="lyrics-wrap">
+          <div class="lyrics-text" id="lyricsText"></div>
+          <button class="lyrics-toggle" id="lyricsToggle" onclick="toggleLyrics()">Show more</button>
+          <div class="lyrics-source">Lyrics via lyrics.ovh</div>
+        </div>
+      </div>
 
+      <!-- REVIEWS -->
       <div class="section-divider" style="margin-bottom:0"><h2>Reviews</h2><div class="line"></div></div>
-
       <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem">
         <button class="review-tab active" id="tabRecent" onclick="switchReviewTab('recent')">Recent</button>
-        <button class="review-tab" id="tabTop" onclick="switchReviewTab('top')">Most liked</button>
+        <button class="review-tab" id="tabTop" onclick="switchReviewTab('top')">Top</button>
       </div>
-
-      <div id="reviewListWrap">
-        <div class="empty-reviews" id="emptyReviews" style="display:none">No reviews yet — be the first.</div>
-        <div class="review-list" id="reviewList"></div>
-      </div>
+      <div class="empty-reviews" id="emptyReviews" style="display:none">No reviews yet — be the first.</div>
+      <div class="review-list" id="reviewList"></div>
 
     </div>
   </div>
@@ -250,18 +231,18 @@
   <!-- RATE MODAL -->
   <div class="modal-overlay" id="rateOverlay">
     <div class="modal">
-      <h3 id="modalAlbumTitle"></h3>
-      <div class="modal-sub" id="modalAlbumSub"></div>
+      <h3 id="modalSongTitle"></h3>
+      <div class="modal-sub" id="modalSongSub"></div>
       <div class="modal-stars" id="modalStars">
-        <span class="modal-star" data-i="1"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
-        <span class="modal-star" data-i="2"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
-        <span class="modal-star" data-i="3"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
-        <span class="modal-star" data-i="4"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
-        <span class="modal-star" data-i="5"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="1"><svg viewBox="0 0 24 24"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="2"><svg viewBox="0 0 24 24"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="3"><svg viewBox="0 0 24 24"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="4"><svg viewBox="0 0 24 24"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
+        <span class="modal-star" data-i="5"><svg viewBox="0 0 24 24"><polygon class="star-bg" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/><polygon class="star-fill" points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
       </div>
       <div class="modal-rating-label" id="modalRatingLabel">Move your mouse over the stars</div>
       <textarea id="reviewText" placeholder="Write a review... (optional)" maxlength="1000" oninput="updateCharCount()"></textarea>
-      <div style="font-size:0.72rem;color:var(--muted);text-align:right;margin-top:4px"><span id="charCount">0</span>/1000</div>
+      <div style="font-size:0.72rem;color:var(--muted);text-align:right;margin-top:-1rem;margin-bottom:1rem"><span id="charCount">0</span>/1000</div>
       <div class="modal-error" id="rateError"></div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeRateModal()">Cancel</button>
@@ -286,14 +267,16 @@
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
     );
 
-    // ── read album ID from URL ──────────────────────────────
     const params = new URLSearchParams(window.location.search);
-    const ALBUM_ID = params.get('id');
+    const TRACK_ID = params.get('id');
 
     let currentUser = null;
     let selectedRating = 0;
     let myExistingRating = null;
-    let albumData = null;
+    let trackData = null;
+    let allReviews = [];
+    let currentReviewTab = 'recent';
+    let lyricsExpanded = false;
 
     // ── helpers ────────────────────────────────────────────
     function starsHtml(n, size = 13) {
@@ -302,7 +285,6 @@
         if (n >= i) {
           s += `<span class="star" style="font-size:${size}px">&#9733;</span>`;
         } else if (n >= i - 0.5) {
-          // half star using clip
           s += `<span style="position:relative;display:inline-block;font-size:${size}px">` +
                `<span class="star empty">&#9733;</span>` +
                `<span class="star" style="position:absolute;left:0;top:0;width:50%;overflow:hidden">&#9733;</span>` +
@@ -318,65 +300,68 @@
       return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     }
 
-    function totalRuntime(totalSeconds) {
-      const mins = Math.round(totalSeconds / 60);
-      if (mins >= 60) {
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        return `${h}h ${m}m`;
-      }
-      return `${mins} min`;
-    }
-
-    // ── fetch album from Deezer ────────────────────────────
-    async function fetchAlbumDeezer(id) {
-      const res = await fetch(`${WORKER}/album/${id}`);
+    // ── fetch track from Deezer ───────────────────────────
+    async function fetchTrack(id) {
+      const res = await fetch(`${WORKER}/track/${id}`);
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message || 'Album not found');
+      if (data.error) throw new Error(data.error.message || 'Track not found');
       return data;
     }
 
-    // ── render album data into the page ───────────────────
-    function renderAlbum(album) {
-      document.title = `${album.title} — ${album.artist.name} — Soundtrackd`;
+    // ── render track into page ────────────────────────────
+    function renderTrack(track) {
+      document.title = `${track.title} — ${track.artist.name} — Soundtrackd`;
 
-      document.getElementById('albumType').textContent = 'Album';
-      document.getElementById('albumTitle').textContent = album.title;
-      document.getElementById('albumArtist').textContent = album.artist.name;
-      document.getElementById('albumLabel').textContent = album.label || '—';
-      document.getElementById('trackCount').textContent = `${album.nb_tracks} tracks`;
-      document.getElementById('releaseDate').textContent = new Date(album.release_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      document.getElementById('albumRuntime').textContent = totalRuntime(album.duration);
+      document.getElementById('songTitle').textContent = track.title;
+      document.getElementById('songArtist').textContent = track.artist.name;
+      document.getElementById('songDuration').textContent = secToMin(track.duration);
+      document.getElementById('songYear').textContent = (track.release_date || track.album?.release_date || '').slice(0, 4) || '—';
 
-      const cover = album.cover_xl || album.cover_big;
+      const albumId = track.album?.id;
+      const albumTitle = track.album?.title || 'Unknown Album';
+      const albumUrl = `album.html?id=${albumId}`;
+
+      document.getElementById('songAlbumLink').textContent = albumTitle;
+      document.getElementById('songAlbumLink').href = albumUrl;
+      document.getElementById('coverLink').href = albumUrl;
+
+      const cover = track.album?.cover_xl || track.album?.cover_big || track.album?.cover_medium || '';
       if (cover) document.getElementById('coverImg').src = cover;
 
-      // tracklist
-      const tracks = album.tracks.data;
-      const tl = document.getElementById('tracklist');
-      tracks.forEach((t, i) => {
-        tl.innerHTML += `
-          <a href="song.html?id=${t.id}" class="track" style="display:flex;align-items:center;gap:1rem;padding:0.7rem 0.5rem;border-bottom:1px solid var(--border);transition:background 0.15s;border-radius:2px;text-decoration:none;color:inherit">
-            <span class="track-num">${i + 1}</span>
-            <span class="track-name" style="flex:1;font-size:0.9rem">${t.title}</span>
-            <span class="track-dur">${secToMin(t.duration)}</span>
-          </a>`;
-      });
-
-      // modal header
-      document.getElementById('modalAlbumTitle').textContent = album.title;
-      document.getElementById('modalAlbumSub').textContent = `${album.artist.name} · ${album.release_date.slice(0, 4)}`;
+      document.getElementById('modalSongTitle').textContent = track.title;
+      document.getElementById('modalSongSub').textContent = `${track.artist.name} · ${albumTitle}`;
     }
 
-    // ── error state ────────────────────────────────────────
-    function renderError() {
-      document.getElementById('errorState').style.display = 'block';
-      document.getElementById('loadingState').style.display = 'none';
+    // ── fetch lyrics ──────────────────────────────────────
+    async function loadLyrics(artist, title) {
+      try {
+        const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+        const data = await res.json();
+        if (data.error || !data.lyrics) return;
+
+        const cleaned = data.lyrics.trim();
+        if (!cleaned) return;
+
+        document.getElementById('lyricsText').textContent = cleaned;
+        document.getElementById('lyricsSection').style.display = 'block';
+
+        // Only show toggle if lyrics overflow
+        const el = document.getElementById('lyricsText');
+        if (el.scrollHeight <= 320) {
+          document.getElementById('lyricsToggle').style.display = 'none';
+        }
+      } catch { /* lyrics unavailable — section stays hidden */ }
     }
 
-    // ── ratings & reviews ──────────────────────────────────
+    function toggleLyrics() {
+      lyricsExpanded = !lyricsExpanded;
+      document.getElementById('lyricsText').classList.toggle('expanded', lyricsExpanded);
+      document.getElementById('lyricsToggle').textContent = lyricsExpanded ? 'Show less' : 'Show more';
+    }
+
+    // ── ratings ───────────────────────────────────────────
     async function loadRatings() {
-      const { data } = await sb.from('ratings').select('rating').eq('album_id', ALBUM_ID);
+      const { data } = await sb.from('track_ratings').select('rating').eq('track_id', TRACK_ID);
       if (!data || data.length === 0) return;
 
       const total = data.length;
@@ -386,15 +371,11 @@
       document.getElementById('avgStars').innerHTML = starsHtml(Math.round(avg * 2) / 2);
       document.getElementById('ratingCount').textContent = `${total} rating${total !== 1 ? 's' : ''}`;
 
-      // Count each half-star bucket
       const buckets = { 0.5:0, 1:0, 1.5:0, 2:0, 2.5:0, 3:0, 3.5:0, 4:0, 4.5:0, 5:0 };
       data.forEach(r => {
         const v = Math.round(parseFloat(r.rating) * 2) / 2;
         if (buckets[v] !== undefined) buckets[v]++;
       });
-      const max = Math.max(...Object.values(buckets), 1);
-
-      // Animate vertical bars in after short delay — px heights relative to 64px container
       const MAX_H = 60;
       const maxCount = Math.max(...Object.values(buckets), 1);
       setTimeout(() => {
@@ -412,7 +393,11 @@
     }
 
     async function loadMyRating() {
-      const { data } = await sb.from('ratings').select('rating, review').eq('album_id', ALBUM_ID).eq('user_id', currentUser.id).single();
+      const { data } = await sb.from('track_ratings')
+        .select('rating, review')
+        .eq('track_id', TRACK_ID)
+        .eq('user_id', currentUser.id)
+        .single();
       if (!data) return;
       myExistingRating = data;
       selectedRating = data.rating;
@@ -421,10 +406,7 @@
       btn.textContent = `Your rating: ${data.rating}/5 — Edit`;
     }
 
-    let currentReviewTab = 'recent';
-    let allReviews = [];
-    let myLikes = new Set();
-
+    // ── reviews ───────────────────────────────────────────
     function switchReviewTab(tab) {
       currentReviewTab = tab;
       document.getElementById('tabRecent').classList.toggle('active', tab === 'recent');
@@ -433,49 +415,22 @@
     }
 
     async function loadReviews() {
-      const list = document.getElementById('reviewList');
-      const empty = document.getElementById('emptyReviews');
-      list.innerHTML = '';
-
-      // Fetch reviews without join
-      const { data, error } = await sb.from('ratings')
+      const { data, error } = await sb.from('track_ratings')
         .select('id, rating, review, user_id, created_at')
-        .eq('album_id', ALBUM_ID)
+        .eq('track_id', TRACK_ID)
         .not('review', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error || !data || data.length === 0) {
-        empty.style.display = 'block';
+        document.getElementById('emptyReviews').style.display = 'block';
         return;
       }
-      empty.style.display = 'none';
 
-      // Fetch usernames separately
       const userIds = [...new Set(data.map(r => r.user_id))];
       const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
       const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
 
-      // Fetch like counts for all reviews
-      const reviewIds = data.map(r => r.id);
-      const { data: likesData } = await sb.from('review_likes').select('rating_id').in('rating_id', reviewIds);
-      const likeCounts = {};
-      (likesData || []).forEach(l => { likeCounts[l.rating_id] = (likeCounts[l.rating_id] || 0) + 1; });
-
-      // Fetch current user's likes
-      if (currentUser) {
-        const { data: myLikesData } = await sb.from('review_likes')
-          .select('rating_id')
-          .eq('user_id', currentUser.id)
-          .in('rating_id', reviewIds);
-        myLikes = new Set((myLikesData || []).map(l => l.rating_id));
-      }
-
-      allReviews = data.map(r => ({
-        ...r,
-        username: usernameMap[r.user_id] || 'anonymous',
-        likeCount: likeCounts[r.id] || 0,
-      }));
-
+      allReviews = data.map(r => ({ ...r, username: usernameMap[r.user_id] || 'anonymous' }));
       renderReviews();
     }
 
@@ -485,7 +440,7 @@
 
       const sorted = [...allReviews].sort((a, b) =>
         currentReviewTab === 'top'
-          ? b.likeCount - a.likeCount
+          ? new Date(b.created_at) - new Date(a.created_at)
           : new Date(b.created_at) - new Date(a.created_at)
       );
 
@@ -494,62 +449,24 @@
 
       sorted.forEach(r => {
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const liked = myLikes.has(r.id);
-        const canLike = currentUser && currentUser.id !== r.user_id;
         list.innerHTML += `
-          <div class="review-item" id="review-${r.id}">
+          <div class="review-item">
             <div class="review-avatar">${r.username.charAt(0).toUpperCase()}</div>
             <div class="review-body">
               <div class="review-header">
-                <a href="profile.html?user=${r.user_id}" class="review-user" style="color:var(--accent)">${r.username}</a>
+                <a href="profile.html?user=${r.user_id}" class="review-user">${r.username}</a>
                 <div class="review-stars">${starsHtml(r.rating, 11)}</div>
               </div>
               <div class="review-text-preview">${r.review}</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-                <span class="review-date">${date}</span>
-                ${canLike ? `
-                  <button class="like-btn ${liked ? 'liked' : ''}" id="like-${r.id}" onclick="toggleLike('${r.id}')">
-                    <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    <span id="like-count-${r.id}">${r.likeCount || ''}</span>
-                  </button>` : r.likeCount > 0 ? `
-                  <span style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:4px">
-                    <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    ${r.likeCount}
-                  </span>` : ''}
-              </div>
+              <span class="review-date">${date}</span>
             </div>
           </div>`;
       });
     }
 
-    async function toggleLike(reviewId) {
-      if (!currentUser) { window.location.href = 'index.html'; return; }
-      const btn = document.getElementById('like-' + reviewId);
-      const countEl = document.getElementById('like-count-' + reviewId);
-      const review = allReviews.find(r => r.id === reviewId);
-      if (!review) return;
-
-      btn.disabled = true;
-      if (myLikes.has(reviewId)) {
-        await sb.from('review_likes').delete().eq('user_id', currentUser.id).eq('rating_id', reviewId);
-        myLikes.delete(reviewId);
-        review.likeCount = Math.max(0, review.likeCount - 1);
-        btn.classList.remove('liked');
-        btn.querySelector('svg').setAttribute('fill', 'none');
-      } else {
-        await sb.from('review_likes').insert({ user_id: currentUser.id, rating_id: reviewId });
-        myLikes.add(reviewId);
-        review.likeCount++;
-        btn.classList.add('liked');
-        btn.querySelector('svg').setAttribute('fill', 'currentColor');
-      }
-      countEl.textContent = review.likeCount || '';
-      btn.disabled = false;
-    }
-
-    // ── modal ──────────────────────────────────────────────
+    // ── modal ─────────────────────────────────────────────
     function openRateModal() {
-      if (!currentUser) { window.location.href = 'index.html'; return; }
+      if (!currentUser) { window.location.href = 'login.html'; return; }
       selectedRating = myExistingRating?.rating || 0;
       document.getElementById('reviewText').value = myExistingRating?.review || '';
       document.getElementById('rateError').textContent = '';
@@ -559,22 +476,21 @@
 
     function closeRateModal() { document.getElementById('rateOverlay').classList.remove('open'); }
 
-
-
     async function saveRating() {
       if (!selectedRating) { document.getElementById('rateError').textContent = 'Please select a star rating.'; return; }
       const btn = document.getElementById('saveRateBtn');
       btn.textContent = 'Saving...'; btn.disabled = true;
 
       const payload = {
-        album_id: ALBUM_ID, user_id: currentUser.id,
+        track_id: TRACK_ID,
+        user_id: currentUser.id,
         rating: selectedRating,
         review: document.getElementById('reviewText').value.trim() || null,
-        album_title: albumData?.title || null,
-        album_cover: albumData?.cover_small || null,
+        track_title: trackData?.title || null,
+        track_cover: trackData?.album?.cover_small || null,
       };
 
-      const { error } = await sb.from('ratings').upsert(payload, { onConflict: 'album_id,user_id' });
+      const { error } = await sb.from('track_ratings').upsert(payload, { onConflict: 'track_id,user_id' });
       btn.textContent = 'Save'; btn.disabled = false;
 
       if (error) { document.getElementById('rateError').textContent = error.message; return; }
@@ -583,13 +499,12 @@
       document.getElementById('myRatingBtn').textContent = `Your rating: ${selectedRating}/5 — Edit`;
       closeRateModal();
       allReviews = [];
-      myLikes = new Set();
       document.getElementById('reviewList').innerHTML = '';
       await loadRatings();
       await loadReviews();
     }
 
-    // Half-star interaction — mousemove detects left/right half
+    // ── half-star interaction ─────────────────────────────
     const modalStarsEl = document.getElementById('modalStars');
 
     function getRatingFromEvent(e) {
@@ -597,21 +512,14 @@
       if (!star) return null;
       const rect = star.getBoundingClientRect();
       const half = (e.clientX - rect.left) < rect.width / 2;
-      const full = parseInt(star.dataset.i);
-      return half ? full - 0.5 : full;
+      return half ? parseInt(star.dataset.i) - 0.5 : parseInt(star.dataset.i);
     }
 
     function applyStarFill(rating) {
       document.querySelectorAll('.modal-star').forEach((star, idx) => {
-        const starNum = idx + 1;
+        const n = idx + 1;
         const fill = star.querySelector('.star-fill');
-        if (rating >= starNum) {
-          fill.style.clipPath = 'inset(0 0% 0 0)';
-        } else if (rating >= starNum - 0.5) {
-          fill.style.clipPath = 'inset(0 50% 0 0)';
-        } else {
-          fill.style.clipPath = 'inset(0 100% 0 0)';
-        }
+        fill.style.clipPath = rating >= n ? 'inset(0 0% 0 0)' : rating >= n - 0.5 ? 'inset(0 50% 0 0)' : 'inset(0 100% 0 0)';
       });
     }
 
@@ -631,12 +539,10 @@
       applyStarFill(r);
       document.getElementById('modalRatingLabel').textContent = ratingLabels[r] || '';
     });
-
     modalStarsEl.addEventListener('mouseleave', () => {
       renderModalStars();
       document.getElementById('modalRatingLabel').textContent = selectedRating > 0 ? (ratingLabels[selectedRating] || '') : 'Move your mouse over the stars';
     });
-
     modalStarsEl.addEventListener('click', e => {
       const r = getRatingFromEvent(e);
       if (r === null) return;
@@ -653,15 +559,13 @@
 
     document.getElementById('rateOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeRateModal(); });
 
-    // ── nav auth ───────────────────────────────────────────
+    // ── nav auth ──────────────────────────────────────────
     async function initNav() {
       const { data: { session } } = await sb.auth.getSession();
       currentUser = session?.user ?? null;
-      const btn = document.getElementById('authBtn');
-      const userInfo = document.getElementById('userInfo');
       if (currentUser) {
-        btn.style.display = 'none';
-        userInfo.style.display = 'flex';
+        document.getElementById('authBtn').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
         const { data: profile } = await sb.from('profiles').select('username').eq('id', currentUser.id).single();
         document.getElementById('navUsername').textContent = profile?.username || currentUser.email.split('@')[0];
       }
@@ -669,23 +573,22 @@
 
     async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
-    // ── main init ──────────────────────────────────────────
+    // ── main init ─────────────────────────────────────────
     async function init() {
-      if (!ALBUM_ID) {
-        renderError();
-        return;
-      }
+      if (!TRACK_ID) { document.getElementById('errorState').style.display = 'block'; document.getElementById('loadingState').style.display = 'none'; return; }
 
       await initNav();
 
       try {
-        const album = await fetchAlbumDeezer(ALBUM_ID);
-        albumData = album;
-        renderAlbum(album);
+        const track = await fetchTrack(TRACK_ID);
+        trackData = track;
+        renderTrack(track);
         document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('albumContent').style.display = 'block';
+        document.getElementById('songContent').style.display = 'block';
+        loadLyrics(track.artist.name, track.title); // non-blocking
       } catch {
-        renderError();
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('loadingState').style.display = 'none';
         return;
       }
 

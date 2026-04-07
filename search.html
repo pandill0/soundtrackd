@@ -252,7 +252,7 @@
         const cover = track.album?.cover_small;
         const artist = track.artist?.name || '';
         list.innerHTML += `
-          <a href="album.html?id=${track.album.id}" class="track-item">
+          <a href="song.html?id=${track.id}" class="track-item">
             <div class="track-thumb">
               ${cover ? `<img src="${cover}" alt="${track.title}" />` : ''}
             </div>
