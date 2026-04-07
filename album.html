@@ -570,6 +570,8 @@
         album_id: ALBUM_ID, user_id: currentUser.id,
         rating: selectedRating,
         review: document.getElementById('reviewText').value.trim() || null,
+        album_title: albumData?.title || null,
+        album_cover: albumData?.cover_small || null,
       };
 
       const { error } = await sb.from('ratings').upsert(payload, { onConflict: 'album_id,user_id' });

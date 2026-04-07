@@ -465,7 +465,7 @@
     // ── REVIEWS ────────────────────────────────────────────
     async function loadReviews() {
       const { data } = await sb.from('ratings')
-        .select('id, rating, review, album_id, created_at')
+        .select('id, rating, review, album_id, album_title, album_cover, created_at')
         .eq('user_id', viewedUserId)
         .not('review', 'is', null)
         .order('created_at', { ascending: false });
@@ -496,11 +496,14 @@
         const liked = myProfileLikes.has(r.id);
         const lc = likeCounts[r.id] || 0;
         const canLike = currentUser && currentUser.id !== viewedUserId && r.id;
+        const thumbHtml = r.album_cover
+          ? `<img src="${r.album_cover}" style="width:100%;height:100%;object-fit:cover" />`
+          : '';
         list.innerHTML += `
           <div class="review-item" id="review-${idx}">
-            <div class="review-thumb" id="thumb-${idx}" style="background:var(--surface2)"></div>
+            <div class="review-thumb" id="thumb-${idx}" style="background:var(--surface2)">${thumbHtml}</div>
             <div class="review-body">
-              <a href="album.html?id=${r.album_id}" class="review-album-name" style="color:var(--accent)" id="albumname-${idx}">${r.album_id}</a>
+              <a href="album.html?id=${r.album_id}" class="review-album-name" style="color:var(--accent)" id="albumname-${idx}">${r.album_title || r.album_id}</a>
               <div class="review-stars">${stars}</div>
               <div class="review-text-body review-text-preview">${r.review}</div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
@@ -514,22 +517,6 @@
           </div>`;
       });
 
-      // Fetch real album names + covers from Deezer
-      try {
-        for (const [idx, r] of data.entries()) {
-          try {
-            const res = await fetch(`${WORKER}/album/${r.album_id}`);
-            const album = await res.json();
-            if (album.error) continue;
-            const nameEl = document.getElementById('albumname-' + idx);
-            const thumbEl = document.getElementById('thumb-' + idx);
-            if (nameEl && album.title) nameEl.textContent = album.title;
-            if (thumbEl && album.cover_small) {
-              thumbEl.innerHTML = `<img src="${album.cover_small}" style="width:100%;height:100%;object-fit:cover" />`;
-            }
-          } catch(e) { continue; }
-        }
-      } catch(e) {}
     }
 
     // ── FOLLOW ─────────────────────────────────────────────

@@ -1406,7 +1406,7 @@
     async function loadRecentReviews() {
       const rl = document.getElementById('reviewList');
       const { data, error } = await sb.from('ratings')
-        .select('rating, review, album_id, created_at, user_id')
+        .select('rating, review, album_id, album_title, album_cover, created_at, user_id')
         .not('review', 'is', null)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -1440,7 +1440,10 @@
         const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         let stars = '';
         for (let i = 1; i <= 5; i++) stars += `<span class="star${i > r.rating ? ' empty' : ''}" style="font-size:11px">&#9733;</span>`;
-        const displayName = '…';
+        const displayName = r.album_title || '…';
+        const thumbHtml = r.album_cover
+          ? `<img src="${r.album_cover}" style="width:100%;height:100%;object-fit:cover" />`
+          : `<div class="ph">${displayName.slice(0,2).toUpperCase()}</div>`;
 
         const liked = myHomeLikes.has(r.id);
         const lc = likeCounts[r.id] || 0;
@@ -1448,7 +1451,7 @@
         rl.innerHTML += `
           <div class="review-item">
             <div class="review-thumb" style="background:var(--surface2)" id="rl-thumb-${idx}">
-              <div class="ph">${displayName.slice(0,2).toUpperCase()}</div>
+              ${thumbHtml}
             </div>
             <div class="review-body">
               <div class="review-header">
@@ -1467,20 +1470,6 @@
           </div>`;
       });
 
-      // Fetch real album names + covers from Deezer
-      for (const [idx, r] of data.entries()) {
-        try {
-          const res = await fetch(`${WORKER}/album/${r.album_id}`);
-          const album = await res.json();
-          if (!album.title) continue;
-          const nameEl = document.getElementById('rl-album-' + idx);
-          const thumbEl = document.getElementById('rl-thumb-' + idx);
-          if (nameEl) { nameEl.textContent = album.title; nameEl.href = `album.html?id=${album.id}`; }
-          if (thumbEl && album.cover_small) {
-            thumbEl.innerHTML = `<img src="${album.cover_small}" style="width:100%;height:100%;object-fit:cover" />`;
-          }
-        } catch { continue; }
-      }
     }
 
     function starsHtml(n, size = 11) {
