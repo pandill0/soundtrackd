@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artist — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0f0b; --surface: #0f1510; --surface2: #161e17; --border: rgba(255,255,255,0.07); --text: #e2e8e3; --muted: #5a6b5c; --accent: #4a9e6b; --accent2: #7c6fcd; --star: #c8a96e; --danger: #e05c5c; }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,15,11,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .btn-nav { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* PAGE */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
+    /* LOADING / ERROR */
+    .state-msg { padding: 6rem 0; text-align: center; color: var(--muted); font-size: 0.9rem; }
+    .spinner { width: 28px; height: 28px; border: 2px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ARTIST HERO */
+    .artist-hero { position: relative; height: 220px; overflow: hidden; border-radius: 2px; margin-top: 2.5rem; }
+    .hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(40px) brightness(0.35) scale(1.1); }
+    .hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem; z-index: 1; }
+    .artist-avatar { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.1); flex-shrink: 0; background: var(--surface2); }
+    .artist-name { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; text-align: center; line-height: 1.1; }
+    .artist-pills { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
+    .pill { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.25rem 0.75rem; border-radius: 99px; }
+    .btn-deezer { font-family: 'Nunito', sans-serif; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.45rem 1.1rem; border: 1px solid rgba(255,255,255,0.18); background: transparent; color: rgba(255,255,255,0.6); border-radius: 2px; transition: all 0.2s; cursor: pointer; }
+    .btn-deezer:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* SECTION DIVIDER */
+    .section-divider { display: flex; align-items: center; gap: 1.5rem; margin: 2.5rem 0 1.5rem; }
+    .section-divider h2 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 400; white-space: nowrap; }
+    .section-divider .line { flex: 1; height: 1px; background: var(--border); }
+
+    /* TOP TRACKS */
+    .tracklist { display: flex; flex-direction: column; }
+    .track { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; border-radius: 2px; color: inherit; }
+    .track:hover { background: var(--surface); }
+    .track-thumb { width: 36px; height: 36px; flex-shrink: 0; background: var(--surface2); overflow: hidden; border-radius: 1px; }
+    .track-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .track-num { font-size: 0.75rem; color: var(--muted); width: 22px; text-align: right; flex-shrink: 0; }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title { font-size: 0.9rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-album { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; flex-shrink: 0; }
+    .track-dur { font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+
+    /* DISCOGRAPHY GRID */
+    .album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    @media (max-width: 600px) { .album-grid { grid-template-columns: repeat(2, 1fr); } }
+    .album-card { display: block; color: inherit; transition: opacity 0.15s; }
+    .album-card:hover .album-card-art { filter: brightness(1.12); }
+    .album-card:hover .album-year-overlay { opacity: 1; }
+    .album-card-art { position: relative; aspect-ratio: 1; background: var(--surface2); overflow: hidden; border-radius: 2px; }
+    .album-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 0.2s; }
+    .album-year-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); font-size: 0.82rem; color: var(--text); opacity: 0; transition: opacity 0.2s; font-weight: 500; }
+    .album-card-info { padding: 0.5rem 0 0; }
+    .album-card-title { font-size: 0.82rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+    .album-card-year { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 4rem; font-size: 0.75rem; color: var(--muted); }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Sound<span>trackd</span></a>
+      <div class="nav-right">
+        <a href="#" onclick="history.back();return false;" style="font-size:0.82rem;color:var(--muted);letter-spacing:0.03em">← Back</a>
+        <button class="btn-nav" id="authBtn" onclick="window.location.href='index.html'">Sign in</button>
+        <div id="userInfo" style="display:none;align-items:center;gap:0.75rem;">
+          <a href="profile.html" style="font-size:0.82rem;color:var(--accent)" id="navUsername"></a>
+          <button class="btn-nav" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+
+    <div id="loadingState" class="state-msg">
+      <div class="spinner"></div>
+      Loading artist...
+    </div>
+
+    <div id="errorState" class="state-msg" style="display:none">
+      Couldn't load this artist. <a href="index.html" style="color:var(--accent)">Go home</a>
+    </div>
+
+    <div id="artistContent" style="display:none">
+
+      <!-- HERO -->
+      <div class="artist-hero" id="artistHero">
+        <img class="hero-bg" id="heroBg" src="" alt="" />
+        <div class="hero-overlay">
+          <img class="artist-avatar" id="artistAvatar" src="" alt="" />
+          <div class="artist-name" id="artistName"></div>
+          <div class="artist-pills" id="artistPills"></div>
+          <a class="btn-deezer" id="deezerLink" href="#" target="_blank" rel="noopener noreferrer">Follow on Deezer ↗</a>
+        </div>
+      </div>
+
+      <!-- TOP TRACKS -->
+      <div class="section-divider"><h2>Top Tracks</h2><div class="line"></div></div>
+      <div class="tracklist" id="tracklist">
+        <div class="state-msg" style="padding:2rem 0"><div class="spinner"></div>Loading tracks…</div>
+      </div>
+
+      <!-- DISCOGRAPHY -->
+      <div class="section-divider"><h2>Discography</h2><div class="line"></div></div>
+      <div class="album-grid" id="albumGrid">
+        <div class="state-msg" style="padding:2rem 0;grid-column:1/-1"><div class="spinner"></div>Loading albums…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    // ── URL param ──────────────────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const ARTIST_ID = params.get('id');
+
+    // ── helpers ────────────────────────────────────────────
+    function fmtFans(n) {
+      if (!n) return null;
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M fans`;
+      if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K fans`;
+      return `${n} fans`;
+    }
+
+    function secToMin(s) {
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    // ── nav auth ───────────────────────────────────────────
+    async function initNav() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session && session.user) {
+        const user = session.user;
+        const username = user.user_metadata?.username || user.email?.split('@')[0] || 'Profile';
+        document.getElementById('navUsername').textContent = username;
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('authBtn').style.display = 'none';
+      }
+    }
+
+    async function signOut() {
+      await sb.auth.signOut();
+      window.location.reload();
+    }
+
+    // ── fetch artist ───────────────────────────────────────
+    async function fetchArtist(id) {
+      const res = await fetch(`${WORKER}/artist/${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || 'Artist not found');
+      return data;
+    }
+
+    // ── render hero ────────────────────────────────────────
+    function renderHero(artist) {
+      document.title = `${artist.name} — Soundtrackd`;
+
+      const pic = artist.picture_xl || artist.picture_big || artist.picture;
+      document.getElementById('heroBg').src = pic || '';
+      document.getElementById('artistAvatar').src = pic || '';
+      document.getElementById('artistAvatar').alt = artist.name;
+      document.getElementById('artistName').textContent = artist.name;
+      document.getElementById('deezerLink').href = `https://www.deezer.com/artist/${artist.id}`;
+
+      const pills = [];
+      const fans = fmtFans(artist.nb_fan);
+      if (fans) pills.push(fans);
+      if (artist.nb_album) pills.push(`${artist.nb_album} album${artist.nb_album !== 1 ? 's' : ''}`);
+
+      const pillsEl = document.getElementById('artistPills');
+      pillsEl.innerHTML = pills.map(p => `<span class="pill">${p}</span>`).join('');
+    }
+
+    // ── render top tracks ──────────────────────────────────
+    function renderTracks(tracks) {
+      const tl = document.getElementById('tracklist');
+      if (!tracks || tracks.length === 0) {
+        tl.innerHTML = '<div style="padding:1.5rem 0;color:var(--muted);font-size:0.88rem">No tracks found.</div>';
+        return;
+      }
+      tl.innerHTML = tracks.map((t, i) => {
+        const albumCover = t.album?.cover_small || t.album?.cover || '';
+        const albumTitle = t.album?.title || '';
+        return `
+          <a href="song.html?id=${t.id}" class="track">
+            <div class="track-thumb">
+              ${albumCover ? `<img src="${albumCover}" alt="" loading="lazy" />` : ''}
+            </div>
+            <span class="track-num">${i + 1}</span>
+            <span class="track-info">
+              <div class="track-title">${t.title}</div>
+            </span>
+            <span class="track-album">${albumTitle}</span>
+            <span class="track-dur">${secToMin(t.duration)}</span>
+          </a>`;
+      }).join('');
+    }
+
+    // ── render discography ─────────────────────────────────
+    function renderDiscography(albums) {
+      const grid = document.getElementById('albumGrid');
+      const filtered = (albums || []).filter(a => a.record_type === 'album');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;padding:1.5rem 0;color:var(--muted);font-size:0.88rem">No albums found.</div>';
+        return;
+      }
+      grid.innerHTML = filtered.map(a => {
+        const cover = a.cover_medium || a.cover_small || a.cover || '';
+        const year = a.release_date ? a.release_date.slice(0, 4) : '';
+        return `
+          <a href="album.html?id=${a.id}" class="album-card">
+            <div class="album-card-art">
+              ${cover ? `<img src="${cover}" alt="${a.title}" loading="lazy" />` : ''}
+              ${year ? `<div class="album-year-overlay">${year}</div>` : ''}
+            </div>
+            <div class="album-card-info">
+              <div class="album-card-title">${a.title}</div>
+              ${year ? `<div class="album-card-year">${year}</div>` : ''}
+            </div>
+          </a>`;
+      }).join('');
+    }
+
+    // ── main init ──────────────────────────────────────────
+    async function init() {
+      if (!ARTIST_ID) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorState').innerHTML =
+          'No artist ID provided. <a href="index.html" style="color:var(--accent)">Go home</a>';
+        return;
+      }
+
+      try {
+        initNav(); // fire and forget — don't block page load
+
+        const artist = await fetchArtist(ARTIST_ID);
+        renderHero(artist);
+
+        // Show artist content shell, hide loading
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('artistContent').style.display = 'block';
+
+        // Fetch tracks + albums in parallel
+        const [tracksRes, albumsRes] = await Promise.all([
+          fetch(`${WORKER}/artist/${ARTIST_ID}/top?limit=5`).then(r => r.json()),
+          fetch(`${WORKER}/artist/${ARTIST_ID}/albums?limit=50`).then(r => r.json())
+        ]);
+
+        renderTracks(tracksRes?.data || []);
+        renderDiscography(albumsRes?.data || []);
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+      }
+    }
+
+    init();
+  </script>
+
+</body>
+</html>

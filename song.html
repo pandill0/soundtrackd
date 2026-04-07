@@ -313,7 +313,8 @@
       document.title = `${track.title} — ${track.artist.name} — Soundtrackd`;
 
       document.getElementById('songTitle').textContent = track.title;
-      document.getElementById('songArtist').textContent = track.artist.name;
+      const artistEl = document.getElementById('songArtist');
+      artistEl.innerHTML = `<a href="artist.html?id=${track.artist.id}" style="color:var(--accent);text-decoration:none">${track.artist.name}</a>`;
       document.getElementById('songDuration').textContent = secToMin(track.duration);
       document.getElementById('songYear').textContent = (track.release_date || track.album?.release_date || '').slice(0, 4) || '—';
 

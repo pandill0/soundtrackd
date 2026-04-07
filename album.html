@@ -342,7 +342,8 @@
 
       document.getElementById('albumType').textContent = 'Album';
       document.getElementById('albumTitle').textContent = album.title;
-      document.getElementById('albumArtist').textContent = album.artist.name;
+      const artistEl = document.getElementById('albumArtist');
+      artistEl.innerHTML = `<a href="artist.html?id=${album.artist.id}" style="color:var(--accent);text-decoration:none">${album.artist.name}</a>`;
       document.getElementById('albumLabel').textContent = album.label || '—';
       document.getElementById('trackCount').textContent = `${album.nb_tracks} tracks`;
       document.getElementById('releaseDate').textContent = new Date(album.release_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

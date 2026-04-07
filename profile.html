@@ -147,6 +147,20 @@
     .fav-overlay-title { font-size: 0.7rem; font-weight: 500; color: #fff; line-height: 1.3; }
     .fav-overlay-remove { font-size: 0.65rem; color: var(--danger); margin-top: 4px; cursor: pointer; }
 
+    /* FAVORITE ARTISTS */
+    .fav-artists-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .fav-artist-slot {
+      aspect-ratio: 1; background: var(--surface2); border: 1px dashed rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; border-radius: 50%;
+    }
+    .fav-artist-slot:hover { border-color: var(--accent); }
+    .fav-artist-slot img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+    .fav-artist-slot .fav-plus { font-size: 1.4rem; color: rgba(255,255,255,0.15); transition: color 0.2s; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .fav-artist-slot:hover .fav-plus { color: var(--accent); }
+    .fav-artist-slot .fav-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; padding: 6px; text-align: center; border-radius: 50%; }
+    .fav-artist-slot:hover .fav-overlay { opacity: 1; }
+
     /* ALBUM PICKER MODAL */
     .picker-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; align-items: center; justify-content: center; }
     .picker-overlay.open { display: flex; }
@@ -250,6 +264,12 @@
         <div class="fav-grid" id="favGrid"></div>
       </div>
 
+      <!-- FAVORITE ARTISTS -->
+      <div class="fav-section" id="favArtistSection" style="display:none">
+        <div class="fav-label">Favorite artists</div>
+        <div class="fav-artists-grid" id="favArtistGrid"></div>
+      </div>
+
       <div class="profile-tabs">
         <div class="tab active" onclick="switchTab('reviews', this)">Reviews</div>
         <div class="tab" onclick="switchTab('lists', this)">Lists</div>
@@ -284,6 +304,21 @@
       </div>
       <div class="picker-results" id="pickerResults">
         <div class="picker-empty">Search for an album above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARTIST PICKER MODAL -->
+  <div class="picker-overlay" id="artistPickerOverlay">
+    <div class="picker-modal">
+      <button class="picker-close" onclick="closeArtistPicker()">✕</button>
+      <h3>Choose a favorite artist</h3>
+      <div class="picker-search-wrap">
+        <input type="text" id="artistPickerInput" placeholder="Search artists..." onkeydown="if(event.key==='Enter')artistPickerSearch()" />
+        <button class="picker-search-btn" onclick="artistPickerSearch()">Search</button>
+      </div>
+      <div class="picker-results" id="artistPickerResults">
+        <div class="picker-empty">Search for an artist above.</div>
       </div>
     </div>
   </div>
@@ -387,7 +422,7 @@
 
       // Load the viewed profile
       const { data: profile } = await sb.from('profiles')
-        .select('id, username, bio, pronouns, avatar_url, website, created_at, favorite_albums')
+        .select('id, username, bio, pronouns, avatar_url, website, created_at, favorite_albums, favorite_artists')
         .eq('id', viewedUserId)
         .single();
 
@@ -404,6 +439,7 @@
       await loadStats();
       await loadReviews();
       await loadFavorites();
+      await loadFavoriteArtists();
 
       // Show correct action button
       if (isOwnProfile) {
@@ -880,6 +916,143 @@
 
     document.getElementById('pickerOverlay').addEventListener('click', e => {
       if (e.target === e.currentTarget) closePicker();
+    });
+
+    // ── FAVORITE ARTISTS ───────────────────────────────────
+    let favoriteArtists = [null, null, null];
+    let artistPickerSlotIdx = 0;
+
+    async function loadFavoriteArtists() {
+      const section = document.getElementById('favArtistSection');
+
+      if (isOwnProfile) {
+        section.style.display = 'block';
+        favoriteArtists = [null, null, null];
+        renderFavoriteArtists();
+      }
+
+      const stored = currentProfile?.favorite_artists || [];
+      favoriteArtists = [0, 1, 2].map(i => stored[i] || null);
+
+      if (!isOwnProfile && favoriteArtists.every(a => !a)) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      renderFavoriteArtists();
+
+      // Freshen pictures from Deezer
+      const toFetch = favoriteArtists.filter(a => a && a.id);
+      if (toFetch.length) {
+        await Promise.all(toFetch.map(async a => {
+          try {
+            const res = await fetch(`${WORKER}/artist/${a.id}`);
+            const data = await res.json();
+            if (data.error) return;
+            const idx = favoriteArtists.findIndex(fa => fa && fa.id === a.id);
+            if (idx !== -1) {
+              favoriteArtists[idx].picture = data.picture_medium;
+              favoriteArtists[idx].name = data.name;
+            }
+          } catch(e) {}
+        }));
+        renderFavoriteArtists();
+      }
+    }
+
+    function renderFavoriteArtists() {
+      const grid = document.getElementById('favArtistGrid');
+      grid.innerHTML = '';
+      favoriteArtists.forEach((artist, idx) => {
+        const slot = document.createElement('div');
+        slot.className = 'fav-artist-slot';
+        if (artist) {
+          if (artist.picture) {
+            slot.innerHTML = `<img src="${artist.picture}" alt="${artist.name}" />`;
+          } else {
+            slot.innerHTML = `<div class="fav-plus" style="font-size:0.7rem;color:var(--muted);padding:4px;text-align:center">${artist.name || '?'}</div>`;
+          }
+          const overlay = document.createElement('div');
+          overlay.className = 'fav-overlay';
+          overlay.innerHTML = `<div class="fav-overlay-title">${artist.name || ''}</div>`;
+          if (isOwnProfile) {
+            overlay.innerHTML += `<div class="fav-overlay-remove" onclick="removeFavoriteArtist(${idx},event)">Remove</div>`;
+          }
+          slot.appendChild(overlay);
+          slot.onclick = () => window.location.href = `artist.html?id=${artist.id}`;
+          if (isOwnProfile) slot.onclick = () => openArtistPicker(idx);
+        } else {
+          if (isOwnProfile) {
+            slot.innerHTML = '<div class="fav-plus">+</div>';
+            slot.onclick = () => openArtistPicker(idx);
+          } else {
+            slot.innerHTML = '<div class="fav-plus" style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.08)">Empty</div>';
+          }
+        }
+        grid.appendChild(slot);
+      });
+    }
+
+    async function saveFavoriteArtists() {
+      const toSave = favoriteArtists.map(a => a ? { id: a.id, name: a.name, picture: a.picture } : null);
+      await sb.from('profiles').update({ favorite_artists: toSave }).eq('id', currentUser.id);
+    }
+
+    async function removeFavoriteArtist(idx, e) {
+      e.stopPropagation();
+      favoriteArtists[idx] = null;
+      renderFavoriteArtists();
+      await saveFavoriteArtists();
+    }
+
+    function openArtistPicker(idx) {
+      artistPickerSlotIdx = idx;
+      document.getElementById('artistPickerInput').value = '';
+      document.getElementById('artistPickerResults').innerHTML = '<div class="picker-empty">Search for an artist above.</div>';
+      document.getElementById('artistPickerOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('artistPickerInput').focus(), 100);
+    }
+
+    function closeArtistPicker() {
+      document.getElementById('artistPickerOverlay').classList.remove('open');
+    }
+
+    async function artistPickerSearch() {
+      const q = document.getElementById('artistPickerInput').value.trim();
+      if (!q) return;
+      const results = document.getElementById('artistPickerResults');
+      results.innerHTML = '<div class="picker-empty">Searching...</div>';
+      try {
+        const res = await fetch(`${WORKER}/search/artist?q=${encodeURIComponent(q)}&limit=10`);
+        const json = await res.json();
+        const items = json.data || [];
+        if (!items.length) { results.innerHTML = '<div class="picker-empty">No results found.</div>'; return; }
+        results.innerHTML = '';
+        items.forEach(artist => {
+          const row = document.createElement('div');
+          row.className = 'picker-result';
+          row.innerHTML = `
+            <div class="picker-thumb" style="border-radius:50%;overflow:hidden">${artist.picture_medium ? `<img src="${artist.picture_medium}" />` : ''}</div>
+            <div>
+              <div class="picker-name">${artist.name}</div>
+              <div class="picker-artist">${Number(artist.nb_fan || 0).toLocaleString()} fans</div>
+            </div>`;
+          row.onclick = () => selectFavoriteArtist(artist.id, artist.name, artist.picture_medium);
+          results.appendChild(row);
+        });
+      } catch(e) { results.innerHTML = '<div class="picker-empty">Could not connect. Try again.</div>'; }
+    }
+
+    async function selectFavoriteArtist(id, name, picture) {
+      favoriteArtists[artistPickerSlotIdx] = { id, name, picture };
+      renderFavoriteArtists();
+      closeArtistPicker();
+      await saveFavoriteArtists();
+    }
+
+    document.getElementById('artistPickerOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeArtistPicker();
     });
 
     init();
