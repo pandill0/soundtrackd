@@ -1460,7 +1460,7 @@
               <div class="review-stars" style="display:flex;gap:2px;margin:3px 0">${stars}</div>
               <div class="review-text-preview">${r.review}</div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-                <span style="font-size:0.75rem;color:var(--muted)"><span style="color:var(--accent2)">${username}</span> &nbsp;·&nbsp; ${date}</span>
+                <span style="font-size:0.75rem;color:var(--muted)"><a href="profile.html?user=${r.user_id}" style="color:var(--accent2);text-decoration:none">${username}</a> &nbsp;·&nbsp; ${date}</span>
                 <div style="display:flex;align-items:center;gap:8px">
                   ${canLike ? `<button class="like-btn ${liked?'liked':''}" onclick="toggleHomeLike('${r.id}',this,${lc},${liked})">${liked?'♥':'♡'} <span>${lc||''}</span></button>` : lc > 0 ? `<span style="font-size:0.72rem;color:var(--muted)">♥ ${lc}</span>` : ''}
                   <a href="album.html?id=${r.album_id}" style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Read →</a>
