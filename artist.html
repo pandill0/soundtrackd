@@ -60,12 +60,12 @@
     /* DISCOGRAPHY GRID */
     .album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
     @media (max-width: 600px) { .album-grid { grid-template-columns: repeat(2, 1fr); } }
-    .album-card { display: block; color: inherit; transition: opacity 0.15s; }
-    .album-card:hover .album-card-art { filter: brightness(1.12); }
+    .album-card { display: block; color: inherit; transition: opacity 0.15s; width: 100%; }
+    .album-card:hover .album-card-art img { filter: brightness(1.12); }
     .album-card:hover .album-year-overlay { opacity: 1; }
-    .album-card-art { position: relative; aspect-ratio: 1; background: var(--surface2); overflow: hidden; border-radius: 2px; }
-    .album-card-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 0.2s; }
-    .album-year-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); font-size: 0.82rem; color: var(--text); opacity: 0; transition: opacity 0.2s; font-weight: 500; }
+    .album-card-art { position: relative; width: 100%; padding-top: 100%; background: var(--surface2); overflow: hidden; border-radius: 2px; }
+    .album-card-art img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 0.2s; }
+    .album-year-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); font-size: 0.82rem; color: var(--text); opacity: 0; transition: opacity 0.2s; font-weight: 500; }
     .album-card-info { padding: 0.5rem 0 0; }
     .album-card-title { font-size: 0.82rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
     .album-card-year { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
