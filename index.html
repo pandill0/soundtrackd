@@ -625,25 +625,26 @@
     .featured-scroll-wrap.dragging { cursor: grabbing; }
     .featured-card {
       display: flex; gap: 0; flex-shrink: 0; width: 100%;
-      scroll-snap-align: start; border-bottom: 1px solid var(--border);
-      background: var(--surface); overflow: hidden;
+      scroll-snap-align: start; border: 1px solid var(--border);
+      background: var(--surface); overflow: hidden; border-radius: 4px;
+      transition: border-color 0.2s;
     }
+    .featured-card:hover { border-color: rgba(255,255,255,0.13); }
     .featured-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
-    .featured-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .featured-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .featured-card:hover .featured-cover img { transform: scale(1.04); }
     .featured-info { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
     .featured-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
     .featured-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .featured-artist { font-size: 0.88rem; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
-    .featured-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .featured-chart { display: flex; align-items: flex-end; gap: 2px; height: 32px; margin: 0.75rem 0; }
-    .featured-bar { flex: 1; background: var(--star); opacity: 0.6; border-radius: 1px 1px 0 0; transition: height 0.5s cubic-bezier(0.4,0,0.2,1); }
-    .featured-bar.peak { opacity: 1; }
-    .featured-footer { display: flex; align-items: center; justify-content: space-between; }
-    .featured-avg { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--star); }
-    .featured-nav { display: flex; gap: 6px; }
-    .featured-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s; }
-    .featured-dot.active { background: var(--accent); }
-    .featured-view-btn { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 4px 12px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; }
+    .featured-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .featured-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; }
+    .featured-avg { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--star); }
+    .featured-nav { display: flex; gap: 6px; align-items: center; }
+    .featured-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    .featured-dot:hover { transform: scale(1.4); }
+    .featured-dot.active { background: var(--accent); transform: scale(1.3); }
+    .featured-view-btn { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 5px 14px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; border-radius: 2px; }
     .featured-view-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ENTRANCE ANIMATIONS */
@@ -1125,8 +1126,9 @@
 
     const ALBUMS_KEY = 'st_opinion_albums';
     const ALBUMS_EXP_KEY = 'st_opinion_albums_exp';
-    const FEATURED_KEY = 'st_featured_albums';
-    const FEATURED_EXP_KEY = 'st_featured_albums_exp';
+    const FEATURED_KEY = 'st_featured_albums_v2';
+    const FEATURED_EXP_KEY = 'st_featured_albums_v2_exp';
+    const FEATURED_TTL = 6 * 60 * 60 * 1000; // 6 hours — charts update weekly
     const ALBUMS_TTL = 30 * 60 * 1000;
 
     function getCachedAlbums(key, expKey) {
@@ -1365,41 +1367,76 @@
       } catch {}
     }
 
+    // Featured uses localStorage (persists across refreshes) with 6h TTL
+    function getFeaturedCache() {
+      try {
+        const d = localStorage.getItem(FEATURED_KEY);
+        const exp = parseInt(localStorage.getItem(FEATURED_EXP_KEY) || '0');
+        if (d && Date.now() < exp) return JSON.parse(d);
+      } catch {}
+      return null;
+    }
+    function setFeaturedCache(data) {
+      try {
+        localStorage.setItem(FEATURED_KEY, JSON.stringify(data));
+        localStorage.setItem(FEATURED_EXP_KEY, String(Date.now() + FEATURED_TTL));
+      } catch {}
+    }
+
     async function loadFeaturedScrollCached() {
-      const cached = getCachedAlbums(FEATURED_KEY, FEATURED_EXP_KEY);
+      const cached = getFeaturedCache();
       if (cached && cached.length) { featuredAlbums = cached; renderFeaturedScroll(); return; }
       await loadFeaturedScroll();
     }
 
     async function loadFeaturedScroll() {
       try {
-        const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=chart.getTopArtists&api_key=${LASTFM_KEY}&format=json&limit=6`);
+        // 1 Last.fm call: top 7 artists this week
+        const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=chart.getTopArtists&api_key=${LASTFM_KEY}&format=json&limit=7`);
         const d = await r.json();
         const artists = d.artists?.artist || [];
 
-        const results = await Promise.all(artists.map(async artist => {
+        // Per artist: resolve Deezer artist → get their latest proper album
+        const results = await Promise.all(artists.map(async (artist, rank) => {
           try {
-            const ar = await fetch(`https://ws.audioscrobbler.com/2.0/?method=artist.getTopAlbums&artist=${encodeURIComponent(artist.name)}&api_key=${LASTFM_KEY}&format=json&limit=1`);
+            // Search Deezer for artist to get numeric ID
+            const sr = await fetch(`${WORKER}/search/artist?q=${encodeURIComponent(artist.name)}&limit=1`);
+            const sd = await sr.json();
+            const deezerArtist = sd.data?.[0];
+            if (!deezerArtist) return null;
+
+            // Get albums — Deezer returns newest first
+            const ar = await fetch(`${WORKER}/artist/${deezerArtist.id}/albums?limit=15`);
             const ad = await ar.json();
-            const album = ad.topalbums?.album?.[0];
-            if (!album) return null;
-            const cover = album.image?.find(i => i.size === 'extralarge')?.['#text'] || '';
+            const albums = ad.data || [];
+
+            // Prefer full album over singles/eps/compilations
+            const pick =
+              albums.find(a => a.record_type === 'album') ||
+              albums.find(a => a.record_type === 'ep') ||
+              albums[0];
+            if (!pick) return null;
+
             return {
-              id: null,
-              title: album.name,
+              id: String(pick.id),
+              title: pick.title,
               artist: artist.name,
-              cover: cover || null,
-              desc: `${Number(artist.listeners).toLocaleString()} listeners this week`,
-              searchQ: encodeURIComponent(`${album.name} ${artist.name}`),
+              cover: pick.cover_medium || pick.cover || null,
+              release_date: pick.release_date || null,
+              rank: rank + 1,
+              listeners: Number(artist.listeners || 0),
             };
           } catch { return null; }
         }));
 
-        featuredAlbums = results.filter(Boolean);
-        setCachedAlbums(FEATURED_KEY, FEATURED_EXP_KEY, featuredAlbums);
+        featuredAlbums = results.filter(a => a && a.cover);
+        setFeaturedCache(featuredAlbums);
         renderFeaturedScroll();
       } catch(e) {}
     }
+
+    let featuredAutoInterval = null;
+    let featuredUserActive = false;
 
     function renderFeaturedScroll() {
       const wrap = document.getElementById('featuredScroll');
@@ -1410,28 +1447,28 @@
       dots.innerHTML = '';
 
       featuredAlbums.forEach((a, i) => {
-        // Mini bar chart — random plausible distribution
-        const bars = [0.2,0.3,0.5,0.7,0.9,1,0.85,0.6,0.4,0.2].map(h =>
-          `<div class="featured-bar${h===1?' peak':''}" style="height:${Math.round(h*32)}px"></div>`
-        ).join('');
+        const releaseYear = a.release_date ? a.release_date.slice(0, 4) : null;
+        const label = `#${a.rank} on Last.fm this week`;
+        const desc = a.listeners
+          ? `${a.listeners.toLocaleString()} listeners this week`
+          : (releaseYear ? `Released ${releaseYear}` : '');
 
         wrap.innerHTML += `
-          <div class="featured-card" id="fc-${i}">
+          <div class="featured-card" id="fc-${i}" onclick="window.location.href='album.html?id=${a.id}'" style="cursor:pointer">
             <div class="featured-cover">
               ${a.cover ? `<img src="${a.cover}" alt="${a.title}" />` : ''}
             </div>
             <div class="featured-info">
               <div>
-                <div class="featured-label">New release</div>
+                <div class="featured-label">${label}</div>
                 <div class="featured-title">${a.title}</div>
                 <div class="featured-artist">${a.artist}</div>
-                <div class="featured-desc">${a.desc}</div>
+                <div class="featured-desc">${desc}</div>
               </div>
               <div>
-                <div class="featured-chart">${bars}</div>
                 <div class="featured-footer">
-                  <span class="featured-avg">—</span>
-                  <button class="featured-view-btn" onclick="window.location.href='search.html?q=${a.searchQ}'">Find album →</button>
+                  <span class="featured-avg" title="Soundtrackd avg rating">—</span>
+                  <button class="featured-view-btn" onclick="event.stopPropagation();window.location.href='album.html?id=${a.id}'">View album →</button>
                 </div>
               </div>
             </div>
@@ -1439,30 +1476,50 @@
 
         const dot = document.createElement('div');
         dot.className = 'featured-dot' + (i === 0 ? ' active' : '');
-        dot.onclick = () => scrollToFeatured(i);
+        dot.onclick = () => { featuredUserActive = true; scrollToFeatured(i); setTimeout(() => featuredUserActive = false, 8000); };
         dots.appendChild(dot);
       });
 
       // Drag to scroll
       let isDown = false, startX, scrollLeft;
-      wrap.addEventListener('mousedown', e => { isDown = true; wrap.classList.add('dragging'); startX = e.pageX - wrap.offsetLeft; scrollLeft = wrap.scrollLeft; });
+      wrap.addEventListener('mousedown', e => {
+        isDown = true; featuredUserActive = true;
+        wrap.classList.add('dragging'); startX = e.pageX - wrap.offsetLeft; scrollLeft = wrap.scrollLeft;
+      });
       wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
-      wrap.addEventListener('mouseup', () => { isDown = false; wrap.classList.remove('dragging'); });
+      wrap.addEventListener('mouseup', () => {
+        isDown = false; wrap.classList.remove('dragging');
+        setTimeout(() => featuredUserActive = false, 8000);
+      });
       wrap.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - wrap.offsetLeft; wrap.scrollLeft = scrollLeft - (x - startX); });
       wrap.addEventListener('scroll', () => {
         const idx = Math.round(wrap.scrollLeft / wrap.offsetWidth);
         document.querySelectorAll('.featured-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
       });
+      // Pause autoscroll on hover
+      wrap.addEventListener('mouseenter', () => { featuredUserActive = true; });
+      wrap.addEventListener('mouseleave', () => { setTimeout(() => featuredUserActive = false, 3000); });
 
       // Load real avg ratings from Supabase
       featuredAlbums.forEach(async (a, i) => {
+        if (!a.id) return;
         const { data } = await sb.from('ratings').select('rating').eq('album_id', a.id);
         if (data && data.length) {
           const avg = data.reduce((s,r) => s + parseFloat(r.rating), 0) / data.length;
           const el = document.querySelector(`#fc-${i} .featured-avg`);
-          if (el) el.textContent = avg.toFixed(1);
+          if (el) el.textContent = `★ ${avg.toFixed(1)}`;
         }
       });
+
+      // Autoscroll: start 3s after render, advance every 5s, skip if user is active
+      clearInterval(featuredAutoInterval);
+      setTimeout(() => {
+        featuredAutoInterval = setInterval(() => {
+          if (featuredUserActive) return;
+          const currentIdx = Math.round(wrap.scrollLeft / wrap.offsetWidth);
+          scrollToFeatured((currentIdx + 1) % featuredAlbums.length);
+        }, 5000);
+      }, 3000);
     }
 
     function scrollToFeatured(idx) {
