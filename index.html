@@ -1151,32 +1151,39 @@
       const withCovers = albums.filter(a => a.cover);
       if (!withCovers.length) return;
 
-      // Shuffle a large pool so columns don't look repetitive
-      const pool = [];
-      while (pool.length < 140) pool.push(...withCovers);
-      pool.sort(() => Math.random() - 0.5);
-
-      const COLS = 22; // unique columns per set
-      const ROWS = 6;  // images per column
+      const shuffle = arr => arr.slice().sort(() => Math.random() - 0.5);
+      const COLS = 22;
+      const ROWS = 6;
       bg.innerHTML = '';
 
-      // Two identical sets back-to-back: animation moves -50% for a seamless infinite loop
+      // Build COLS unique columns with independently shuffled image sequences,
+      // then duplicate them for the seamless -50% loop.
+      const colData = Array.from({ length: COLS }, () => {
+        const pool = [];
+        while (pool.length < ROWS) pool.push(...withCovers);
+        return shuffle(pool).slice(0, ROWS);
+      });
+
       for (let set = 0; set < 2; set++) {
-        for (let c = 0; c < COLS; c++) {
+        // Re-shuffle the column order for each set so the repeat isn't obvious
+        const order = shuffle(colData.map((_, i) => i));
+        order.forEach(ci => {
           const col = document.createElement('div');
           col.className = 'hero-bg-col';
-          for (let r = 0; r < ROWS; r++) {
+          // Shuffle the images within this column too for the second pass
+          const imgs = set === 0 ? colData[ci] : shuffle(colData[ci]);
+          imgs.forEach(a => {
             const block = document.createElement('div');
             block.className = 'hero-bg-block';
             const img = document.createElement('img');
-            img.src = pool[(c * ROWS + r) % pool.length].cover;
+            img.src = a.cover;
             img.alt = '';
             img.loading = 'lazy';
             block.appendChild(img);
             col.appendChild(block);
-          }
+          });
           bg.appendChild(col);
-        }
+        });
       }
     }
 
