@@ -638,7 +638,10 @@
     .featured-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .featured-artist { font-size: 0.88rem; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
     .featured-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
-    .featured-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; }
+    .featured-chart { display: flex; align-items: flex-end; gap: 3px; height: 28px; margin: 0.85rem 0 0.1rem; }
+    .featured-bar { flex: 1; background: var(--star); opacity: 0.45; border-radius: 2px 2px 0 0; transition: height 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; min-height: 2px; }
+    .featured-bar.has-data { opacity: 0.75; }
+    .featured-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.6rem; }
     .featured-avg { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--star); }
     .featured-nav { display: flex; gap: 6px; align-items: center; }
     .featured-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s, transform 0.2s; }
@@ -646,6 +649,9 @@
     .featured-dot.active { background: var(--accent); transform: scale(1.3); }
     .featured-view-btn { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 5px 14px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; border-radius: 2px; }
     .featured-view-btn:hover { border-color: var(--accent); color: var(--accent); }
+    /* last.fm attribution outside the box */
+    .featured-section { position: relative; }
+    .featured-attribution { position: absolute; bottom: -1.35rem; right: 0; font-size: 0.62rem; color: var(--muted); opacity: 0.5; letter-spacing: 0.05em; pointer-events: none; }
 
     /* ENTRANCE ANIMATIONS */
     @keyframes fadeUp {
@@ -974,6 +980,7 @@
       <div class="featured-nav" id="featuredDots"></div>
     </div>
     <div class="featured-scroll-wrap" id="featuredScroll"></div>
+    <div class="featured-attribution">chart data from last.fm</div>
   </section>
 
   <!-- START YOUR OPINION -->
@@ -1446,9 +1453,15 @@
       wrap.innerHTML = '';
       dots.innerHTML = '';
 
+      // Soft bell-curve placeholder bars shown before real data loads
+      const BELL = [0.15, 0.3, 0.6, 0.9, 1, 0.85, 0.55, 0.3, 0.15, 0.08];
+      const bellBars = BELL.map(h =>
+        `<div class="featured-bar" style="height:${Math.round(h * 24)}px"></div>`
+      ).join('');
+
       featuredAlbums.forEach((a, i) => {
         const releaseYear = a.release_date ? a.release_date.slice(0, 4) : null;
-        const label = `#${a.rank} on Last.fm this week`;
+        const label = `#${a.rank} this week`;
         const desc = a.listeners
           ? `${a.listeners.toLocaleString()} listeners this week`
           : (releaseYear ? `Released ${releaseYear}` : '');
@@ -1464,12 +1477,11 @@
                 <div class="featured-title">${a.title}</div>
                 <div class="featured-artist">${a.artist}</div>
                 <div class="featured-desc">${desc}</div>
+                <div class="featured-chart" id="fc-chart-${i}">${bellBars}</div>
               </div>
-              <div>
-                <div class="featured-footer">
-                  <span class="featured-avg" title="Soundtrackd avg rating">—</span>
-                  <button class="featured-view-btn" onclick="event.stopPropagation();window.location.href='album.html?id=${a.id}'">View album →</button>
-                </div>
+              <div class="featured-footer">
+                <span class="featured-avg" title="Soundtrackd avg rating">—</span>
+                <button class="featured-view-btn" onclick="event.stopPropagation();window.location.href='album.html?id=${a.id}'">View album →</button>
               </div>
             </div>
           </div>`;
@@ -1500,14 +1512,30 @@
       wrap.addEventListener('mouseenter', () => { featuredUserActive = true; });
       wrap.addEventListener('mouseleave', () => { setTimeout(() => featuredUserActive = false, 3000); });
 
-      // Load real avg ratings from Supabase
+      // Load real avg ratings + distribution from Supabase
       featuredAlbums.forEach(async (a, i) => {
         if (!a.id) return;
         const { data } = await sb.from('ratings').select('rating').eq('album_id', a.id);
-        if (data && data.length) {
-          const avg = data.reduce((s,r) => s + parseFloat(r.rating), 0) / data.length;
-          const el = document.querySelector(`#fc-${i} .featured-avg`);
-          if (el) el.textContent = `★ ${avg.toFixed(1)}`;
+        if (!data || !data.length) return;
+
+        // Avg rating
+        const avg = data.reduce((s,r) => s + parseFloat(r.rating), 0) / data.length;
+        const avgEl = document.querySelector(`#fc-${i} .featured-avg`);
+        if (avgEl) avgEl.textContent = `★ ${avg.toFixed(1)}`;
+
+        // Build distribution across 10 half-star buckets (0.5 → 5)
+        const buckets = new Array(10).fill(0);
+        data.forEach(r => {
+          const v = parseFloat(r.rating);
+          const idx = Math.round(v * 2) - 1; // 0.5→0, 1→1 ... 5→9
+          if (idx >= 0 && idx < 10) buckets[idx]++;
+        });
+        const peak = Math.max(...buckets, 1);
+        const chartEl = document.getElementById(`fc-chart-${i}`);
+        if (chartEl) {
+          chartEl.innerHTML = buckets.map(count =>
+            `<div class="featured-bar has-data" style="height:${Math.max(2, Math.round((count / peak) * 24))}px"></div>`
+          ).join('');
         }
       });
 
