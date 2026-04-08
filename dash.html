@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Soundtrackd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f0b;
+      --surface: #0f1510;
+      --surface2: #161e17;
+      --border: rgba(255,255,255,0.07);
+      --text: #e2e8e3;
+      --muted: #5a6b5c;
+      --accent: #4a9e6b;
+      --accent2: #7c6fcd;
+      --danger: #e05c5c;
+      --star: #c8a96e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── NAV ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(10,15,11,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .logo span { font-style: italic; color: var(--text); }
+
+    .nav-links { display: flex; gap: 1.5rem; font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 1; }
+    .nav-links a { white-space: nowrap; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    @media (max-width: 580px) { .nav-links { display: none; } }
+
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; margin-left: auto; }
+
+    .btn-signin {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
+
+    .search-bar { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); padding: 0.5rem 1rem; width: 180px; transition: border-color 0.2s; }
+    .search-bar:focus-within { border-color: rgba(200,169,110,0.4); }
+    .search-bar input { background: transparent; border: none; outline: none; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.85rem; width: 100%; }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-icon { color: var(--muted); font-size: 14px; }
+
+    /* bell */
+    .bell-btn { position: relative; background: transparent; border: 1px solid var(--border); color: var(--muted); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .bell-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bell-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; display: none; }
+
+    /* notif panel */
+    .notif-panel { position: fixed; top: 64px; right: 2rem; width: 300px; background: var(--surface); border: 1px solid var(--border); z-index: 200; max-height: 400px; overflow-y: auto; display: none; }
+    .notif-panel.open { display: block; }
+    .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .notif-clear { cursor: pointer; font-size: 0.7rem; color: var(--accent); }
+    .notif-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+    .notif-item.unread { background: rgba(74,158,107,0.04); }
+    .notif-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+    .notif-dot.read { background: transparent; }
+    .notif-empty { padding: 1rem; font-size: 0.82rem; color: var(--muted); text-align: center; }
+
+    /* ── PAGE ── */
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── DASH HEADER ── */
+    .dash-header {
+      padding: 2.5rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .dash-greeting {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .dash-greeting em { font-style: italic; color: var(--accent); }
+
+    .dash-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .dash-stats {
+      display: flex;
+      gap: 2rem;
+      flex-shrink: 0;
+    }
+
+    .dash-stat {
+      text-align: right;
+    }
+
+    .dash-stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .dash-stat-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── TWO-COL LAYOUT ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 2.5rem;
+      padding: 2.5rem 0 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .dash-grid { grid-template-columns: 1fr; }
+      .dash-sidebar { order: -1; }
+    }
+
+    /* ── SECTION HEADERS ── */
+    .dash-section-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .dash-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── ACTIVITY FEED ── */
+    .feed-list { display: flex; flex-direction: column; gap: 0; }
+
+    .feed-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+      transition: background 0.15s;
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--surface2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .feed-cover {
+      width: 46px;
+      height: 46px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .feed-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .feed-body { flex: 1; min-width: 0; }
+
+    .feed-who {
+      font-size: 0.82rem;
+      margin-bottom: 3px;
+      line-height: 1.4;
+    }
+
+    .feed-who a { color: var(--accent2); font-weight: 500; }
+    .feed-who a:hover { text-decoration: underline; }
+    .feed-who .feed-album-link { color: var(--text); font-weight: 500; }
+    .feed-who .feed-album-link:hover { color: var(--accent); }
+
+    .feed-stars { display: flex; gap: 2px; margin-bottom: 4px; }
+    .feed-star { font-size: 10px; color: var(--star); }
+    .feed-star.empty { color: var(--surface2); }
+
+    .feed-review {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .feed-time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    .feed-type-tag {
+      display: inline-block;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 2px;
+      margin-bottom: 4px;
+    }
+
+    .feed-type-tag.tag-review { color: var(--accent2); border-color: rgba(124,111,205,0.3); }
+    .feed-type-tag.tag-rating { color: var(--star); border-color: rgba(200,169,110,0.3); }
+    .feed-type-tag.tag-follow { color: var(--accent); border-color: rgba(74,158,107,0.3); }
+
+    .feed-empty {
+      padding: 2.5rem 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .feed-empty a { color: var(--accent); }
+
+    /* filter tabs */
+    .feed-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+      width: fit-content;
+    }
+
+    .feed-tab {
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 6px 16px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.15s;
+      border-right: 1px solid var(--border);
+    }
+
+    .feed-tab:last-child { border-right: none; }
+    .feed-tab:hover { color: var(--text); background: var(--surface); }
+    .feed-tab.active { color: var(--accent); background: var(--surface); }
+
+    /* load more */
+    .feed-more {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.25rem 0 0;
+      cursor: pointer;
+      transition: color 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .feed-more:hover { color: var(--accent); }
+
+    /* ── SIDEBAR ── */
+    .dash-sidebar { display: flex; flex-direction: column; gap: 2rem; }
+
+    /* who to follow */
+    .suggest-list { display: flex; flex-direction: column; gap: 0; }
+
+    .suggest-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .suggest-item:last-child { border-bottom: none; }
+
+    .suggest-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .suggest-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .suggest-name { flex: 1; font-size: 0.85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggest-meta { font-size: 0.7rem; color: var(--muted); }
+
+    .suggest-follow-btn {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .suggest-follow-btn:hover { background: var(--accent); color: #0a0f0b; }
+    .suggest-follow-btn.following { border-color: var(--border); color: var(--muted); }
+    .suggest-follow-btn.following:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* your top-rated recent */
+    .your-recent-list { display: flex; flex-direction: column; gap: 0; }
+
+    .your-recent-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .your-recent-item:last-child { border-bottom: none; }
+    .your-recent-item:hover .your-recent-title { color: var(--accent); }
+
+    .your-recent-thumb {
+      width: 36px;
+      height: 36px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .your-recent-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .your-recent-info { flex: 1; min-width: 0; }
+    .your-recent-title { font-size: 0.82rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s; }
+    .your-recent-artist { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .your-recent-rating { font-size: 0.78rem; color: var(--star); flex-shrink: 0; font-family: 'Playfair Display', serif; }
+
+    /* mutuals panel */
+    .mutual-list { display: flex; flex-direction: column; gap: 0; }
+
+    .mutual-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .mutual-item:last-child { border-bottom: none; }
+
+    .mutual-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-family: 'Playfair Display', serif;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .mutual-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .mutual-name { flex: 1; font-size: 0.82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mutual-rating-count { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
+
+    /* skeleton pulse */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    .skel { background: var(--surface2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
+
+    /* footer */
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 0; }
+    .footer-inner { max-width: 960px; margin: 0 auto; padding: 0 2rem; display: flex; flex-direction: column; gap: 4px; }
+    .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; margin-bottom: 2px; }
+    footer span { font-size: 0.75rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo" onclick="window.location.href='index.html'">Sound<span>trackd</span></div>
+      <div class="nav-links">
+        <a href="dash.html" class="active">Dashboard</a>
+        <a href="lists.html">Lists</a>
+        <a href="charts.html">Charts</a>
+        <a href="members.html">Members</a>
+      </div>
+      <div class="nav-right">
+        <div class="search-bar" onclick="document.getElementById('navSearch').focus()">
+          <span class="search-icon">&#9906;</span>
+          <input type="text" id="navSearch" placeholder="Search..."
+            onkeydown="if(event.key==='Enter' && this.value.trim()) window.location.href='search.html?q='+encodeURIComponent(this.value.trim())" />
+        </div>
+        <button class="bell-btn" id="bellBtn" onclick="toggleNotifs()" title="Notifications">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="bell-badge" id="bellBadge"></span>
+        </button>
+        <a href="profile.html" style="font-size:0.82rem;color:var(--accent);letter-spacing:0.03em" id="userEmail"></a>
+        <button class="btn-signin" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">Notifications<span class="notif-clear" onclick="markAllRead()">Mark all read</span></div>
+    <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
+  </div>
+
+  <div class="page-wrap">
+
+    <!-- HEADER -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-greeting">Good to see you, <em id="greetName">...</em></div>
+        <div class="dash-sub" id="dashSub">Here's what's happening in your world.</div>
+      </div>
+      <div class="dash-stats" id="dashStats" style="display:none">
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="statRatings">—</div>
+          <div class="dash-stat-label">Ratings</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="statFollowing">—</div>
+          <div class="dash-stat-label">Following</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="statFollowers">—</div>
+          <div class="dash-stat-label">Followers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN + SIDEBAR -->
+    <div class="dash-grid">
+
+      <!-- MAIN FEED -->
+      <main>
+        <div class="dash-section-title">Friends' activity</div>
+
+        <!-- filter tabs -->
+        <div class="feed-tabs">
+          <button class="feed-tab active" data-filter="all" onclick="setFeedFilter('all',this)">All</button>
+          <button class="feed-tab" data-filter="review" onclick="setFeedFilter('review',this)">Reviews</button>
+          <button class="feed-tab" data-filter="rating" onclick="setFeedFilter('rating',this)">Ratings</button>
+        </div>
+
+        <div class="feed-list" id="feedList">
+          <!-- skeleton -->
+          <div class="feed-item" id="feedSkel">
+            <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;gap:0.75rem;">
+              <div class="skel" style="width:46px;height:46px;flex-shrink:0"></div>
+              <div style="flex:1;">
+                <div class="skel" style="height:12px;width:60%;margin-bottom:8px"></div>
+                <div class="skel" style="height:10px;width:80%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feed-more" id="feedMore" style="display:none" onclick="loadMoreFeed()">Load more →</div>
+      </main>
+
+      <!-- SIDEBAR -->
+      <aside class="dash-sidebar">
+
+        <!-- your recent ratings -->
+        <div>
+          <div class="dash-section-title">Your recent ratings</div>
+          <div class="your-recent-list" id="yourRecentList">
+            <div class="skel" style="height:36px;margin-bottom:6px"></div>
+            <div class="skel" style="height:36px;margin-bottom:6px"></div>
+            <div class="skel" style="height:36px"></div>
+          </div>
+        </div>
+
+        <!-- mutuals -->
+        <div>
+          <div class="dash-section-title">Mutuals</div>
+          <div class="mutual-list" id="mutualList">
+            <div class="skel" style="height:28px;margin-bottom:6px"></div>
+            <div class="skel" style="height:28px"></div>
+          </div>
+        </div>
+
+        <!-- suggested follows -->
+        <div>
+          <div class="dash-section-title">Suggested members</div>
+          <div class="suggest-list" id="suggestList">
+            <div class="skel" style="height:40px;margin-bottom:6px"></div>
+            <div class="skel" style="height:40px"></div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Soundtrackd</div>
+      <span>A place for music lovers.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://cmjemqmxnpusluzyiwyj.supabase.co',
+      'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
+    );
+
+    let currentUser = null;
+    let currentUsername = null;
+    let followingIds = [];   // IDs current user follows
+    let followerIds = [];    // IDs that follow current user
+    let mutualIds = [];      // intersection
+
+    // feed state
+    let allFeedItems = [];
+    let feedFilter = 'all';
+    const FEED_PAGE = 20;
+    let feedOffset = 0;
+
+    // ── AUTH ──────────────────────────────────────────────
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user ?? null;
+
+      if (!currentUser) {
+        // Not logged in — redirect to index or login
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Load username
+      const { data: prof } = await sb.from('profiles')
+        .select('username')
+        .eq('id', currentUser.id)
+        .single();
+      currentUsername = prof?.username || currentUser.email?.split('@')[0] || 'there';
+
+      document.getElementById('greetName').textContent = currentUsername;
+      document.getElementById('userEmail').textContent = currentUsername;
+      document.getElementById('userEmail').href = 'profile.html';
+
+      // Fire all sections in parallel
+      await Promise.all([
+        loadStats(),
+        loadFollowGraph(),
+      ]);
+
+      // These depend on followingIds / followerIds
+      await Promise.all([
+        loadFeed(),
+        loadYourRecent(),
+        loadMutuals(),
+        loadSuggested(),
+      ]);
+
+      loadNotifications();
+    }
+
+    // ── STATS ──────────────────────────────────────────────
+    async function loadStats() {
+      const [
+        { count: ratingsCount },
+        { count: followingCount },
+        { count: followersCount },
+      ] = await Promise.all([
+        sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id),
+        sb.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', currentUser.id),
+        sb.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', currentUser.id),
+      ]);
+
+      document.getElementById('statRatings').textContent = ratingsCount ?? 0;
+      document.getElementById('statFollowing').textContent = followingCount ?? 0;
+      document.getElementById('statFollowers').textContent = followersCount ?? 0;
+      document.getElementById('dashStats').style.display = 'flex';
+    }
+
+    // ── FOLLOW GRAPH ───────────────────────────────────────
+    async function loadFollowGraph() {
+      const [
+        { data: following },
+        { data: followers },
+      ] = await Promise.all([
+        sb.from('follows').select('following_id').eq('follower_id', currentUser.id),
+        sb.from('follows').select('follower_id').eq('following_id', currentUser.id),
+      ]);
+
+      followingIds = (following || []).map(r => r.following_id);
+      followerIds  = (followers || []).map(r => r.follower_id);
+      mutualIds    = followingIds.filter(id => followerIds.includes(id));
+    }
+
+    // ── FEED ───────────────────────────────────────────────
+    function starsHtml(rating) {
+      const full = Math.floor(rating);
+      const half = rating - full >= 0.5;
+      const empty = 5 - full - (half ? 1 : 0);
+      return '★'.repeat(full) + (half ? '½' : '') + '<span style="opacity:0.2">' + '★'.repeat(empty) + '</span>';
+    }
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      const d = Math.floor(h / 24);
+      if (d < 7) return `${d}d ago`;
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    async function loadFeed() {
+      if (!followingIds.length) {
+        showEmptyFeed();
+        return;
+      }
+
+      // Fetch ratings + reviews from everyone current user follows
+      const { data, error } = await sb.from('ratings')
+        .select('id, user_id, rating, review, album_id, album_title, album_cover, created_at')
+        .in('user_id', followingIds)
+        .order('created_at', { ascending: false })
+        .limit(100); // fetch up to 100, paginate client-side
+
+      if (error || !data?.length) { showEmptyFeed(); return; }
+
+      // Fetch usernames for all these users
+      const uids = [...new Set(data.map(r => r.user_id))];
+      const { data: profiles } = await sb.from('profiles').select('id, username').in('id', uids);
+      const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+
+      allFeedItems = data.map(r => ({ ...r, username: usernameMap[r.user_id] || 'member' }));
+
+      renderFeed(true);
+    }
+
+    function getFilteredItems() {
+      if (feedFilter === 'review') return allFeedItems.filter(r => r.review);
+      if (feedFilter === 'rating') return allFeedItems.filter(r => !r.review);
+      return allFeedItems;
+    }
+
+    function renderFeed(reset) {
+      const list = document.getElementById('feedList');
+      const moreBtn = document.getElementById('feedMore');
+      const items = getFilteredItems();
+
+      if (reset) { feedOffset = 0; list.innerHTML = ''; }
+      if (!items.length) { showEmptyFeed(); return; }
+
+      const page = items.slice(feedOffset, feedOffset + FEED_PAGE);
+      feedOffset += page.length;
+
+      page.forEach(r => {
+        const hasReview = r.review && r.review.trim().length > 0;
+        const tagClass = hasReview ? 'tag-review' : 'tag-rating';
+        const tagLabel = hasReview ? 'Review' : 'Rating';
+        const initial = (r.username || '?')[0].toUpperCase();
+        const isMutual = mutualIds.includes(r.user_id);
+
+        const el = document.createElement('div');
+        el.className = 'feed-item';
+        el.innerHTML = `
+          <a href="profile.html?user=${r.user_id}" style="flex-shrink:0">
+            <div class="feed-avatar">${initial}</div>
+          </a>
+          <a href="album.html?id=${r.album_id}" style="flex-shrink:0">
+            <div class="feed-cover">
+              ${r.album_cover ? `<img src="${r.album_cover}" alt="" loading="lazy">` : ''}
+            </div>
+          </a>
+          <div class="feed-body">
+            <div class="feed-who">
+              <a href="profile.html?user=${r.user_id}">${r.username}</a>${isMutual ? ' <span style="font-size:0.65rem;color:var(--accent);opacity:0.7">mutual</span>' : ''}
+              rated <a href="album.html?id=${r.album_id}" class="feed-album-link">${r.album_title || 'an album'}</a>
+            </div>
+            <div class="feed-stars">${starsHtml(parseFloat(r.rating))}</div>
+            ${hasReview ? `<div class="feed-review">${r.review}</div>` : ''}
+            <div class="feed-time">${timeAgo(r.created_at)}</div>
+          </div>`;
+        list.appendChild(el);
+      });
+
+      moreBtn.style.display = feedOffset < items.length ? 'block' : 'none';
+    }
+
+    function loadMoreFeed() { renderFeed(false); }
+
+    function showEmptyFeed() {
+      document.getElementById('feedList').innerHTML = `
+        <div class="feed-empty">
+          ${followingIds.length === 0
+            ? `You're not following anyone yet.<br>Find people on the <a href="members.html">members page</a>.`
+            : `No activity from your friends yet.<br>Check back soon.`}
+        </div>`;
+      document.getElementById('feedMore').style.display = 'none';
+    }
+
+    function setFeedFilter(filter, btn) {
+      feedFilter = filter;
+      document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderFeed(true);
+    }
+
+    // ── YOUR RECENT RATINGS ────────────────────────────────
+    async function loadYourRecent() {
+      const el = document.getElementById('yourRecentList');
+      const { data } = await sb.from('ratings')
+        .select('album_id, album_title, album_cover, rating')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (!data?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No ratings yet.</div>'; return; }
+
+      el.innerHTML = data.map(r => `
+        <div class="your-recent-item" onclick="window.location.href='album.html?id=${r.album_id}'">
+          <div class="your-recent-thumb">
+            ${r.album_cover ? `<img src="${r.album_cover}" alt="" loading="lazy">` : ''}
+          </div>
+          <div class="your-recent-info">
+            <div class="your-recent-title">${r.album_title || 'Unknown album'}</div>
+          </div>
+          <div class="your-recent-rating">★ ${parseFloat(r.rating).toFixed(1)}</div>
+        </div>`).join('');
+    }
+
+    // ── MUTUALS ────────────────────────────────────────────
+    async function loadMutuals() {
+      const el = document.getElementById('mutualList');
+      if (!mutualIds.length) {
+        el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No mutuals yet.</div>';
+        return;
+      }
+
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, username')
+        .in('id', mutualIds)
+        .limit(8);
+
+      if (!profiles?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No mutuals yet.</div>'; return; }
+
+      // Get rating counts for each mutual
+      const counts = await Promise.all(profiles.map(async p => {
+        const { count } = await sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', p.id);
+        return { ...p, count: count ?? 0 };
+      }));
+
+      el.innerHTML = counts.map(p => `
+        <div class="mutual-item" onclick="window.location.href='profile.html?user=${p.id}'">
+          <div class="mutual-avatar">${p.username[0].toUpperCase()}</div>
+          <div class="mutual-name">${p.username}</div>
+          <div class="mutual-rating-count">${p.count} ratings</div>
+        </div>`).join('');
+    }
+
+    // ── SUGGESTED FOLLOWS ──────────────────────────────────
+    async function loadSuggested() {
+      const el = document.getElementById('suggestList');
+
+      // Suggest: people followed by people you follow, who you don't follow yet
+      // Simple fallback: just get active members not in your followingIds
+      const excluded = [...followingIds, currentUser.id];
+
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, username')
+        .not('id', 'in', `(${excluded.join(',')})`)
+        .limit(20);
+
+      if (!profiles?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No suggestions right now.</div>'; return; }
+
+      // Sort by who has the most ratings (most active)
+      const withCounts = await Promise.all((profiles || []).map(async p => {
+        const { count } = await sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', p.id);
+        return { ...p, count: count ?? 0 };
+      }));
+
+      const sorted = withCounts.sort((a, b) => b.count - a.count).slice(0, 5);
+
+      el.innerHTML = sorted.map(p => `
+        <div class="suggest-item">
+          <div class="suggest-avatar">${p.username[0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div class="suggest-name">${p.username}</div>
+            <div class="suggest-meta">${p.count} ratings</div>
+          </div>
+          <button class="suggest-follow-btn" id="sfbtn-${p.id}" onclick="toggleSuggestFollow('${p.id}', this)">Follow</button>
+        </div>`).join('');
+    }
+
+    async function toggleSuggestFollow(userId, btn) {
+      if (btn.classList.contains('following')) {
+        await sb.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
+        btn.textContent = 'Follow';
+        btn.classList.remove('following');
+      } else {
+        await sb.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
+        await sb.from('notifications').insert({ user_id: userId, type: 'follow', from_user_id: currentUser.id });
+        btn.textContent = 'Following';
+        btn.classList.add('following');
+        followingIds.push(userId);
+      }
+    }
+
+    // ── NOTIFICATIONS ──────────────────────────────────────
+    async function loadNotifications() {
+      if (!currentUser) return;
+      const { data } = await sb.from('notifications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      const badge = document.getElementById('bellBadge');
+      const unread = (data || []).filter(n => !n.read);
+      if (unread.length) { badge.style.display = 'flex'; badge.textContent = unread.length > 9 ? '9+' : unread.length; }
+
+      const fromIds = [...new Set((data || []).map(n => n.from_user_id).filter(Boolean))];
+      const { data: nProfs } = await sb.from('profiles').select('id, username').in('id', fromIds);
+      const nMap = Object.fromEntries((nProfs || []).map(p => [p.id, p.username]));
+
+      const list = document.getElementById('notifList');
+      if (!data?.length) return;
+      list.innerHTML = data.map(n => {
+        const who = nMap[n.from_user_id] || 'Someone';
+        const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const msg = n.type === 'follow' ? `<strong>${who}</strong> followed you` : n.type;
+        return `<div class="notif-item ${n.read ? '' : 'unread'}">
+          <div class="notif-dot ${n.read ? 'read' : ''}"></div>
+          <div style="flex:1"><div style="font-size:0.82rem">${msg}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${date}</div></div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleNotifs() {
+      document.getElementById('notifPanel').classList.toggle('open');
+      markAllRead();
+    }
+
+    async function markAllRead() {
+      if (!currentUser) return;
+      await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
+      document.getElementById('bellBadge').style.display = 'none';
+    }
+
+    document.addEventListener('click', e => {
+      const panel = document.getElementById('notifPanel');
+      const bell = document.getElementById('bellBtn');
+      if (panel && !panel.contains(e.target) && bell && !bell.contains(e.target)) panel.classList.remove('open');
+    });
+
+    async function signOut() {
+      await sb.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    init();
+  </script>
+</body>
+</html>

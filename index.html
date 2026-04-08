@@ -925,6 +925,7 @@
     <div class="nav-inner">
       <div class="logo">Sound<span>trackd</span></div>
       <div class="nav-links" id="navLinks">
+        <a href="dash.html" id="dashLink" style="display:none">Dashboard</a>
         <a href="lists.html">Lists</a>
         <a href="charts.html">Charts</a>
         <a href="members.html">Members</a>
@@ -1096,13 +1097,16 @@
     function updateNav() {
       const btn = document.getElementById('authBtn');
       const userInfo = document.getElementById('userInfo');
+      const dashLink = document.getElementById('dashLink');
       if (currentUser) {
         btn.style.display = 'none';
         userInfo.style.display = 'flex';
         document.getElementById('userEmail').textContent = currentUsername || currentUser.email.split('@')[0];
+        if (dashLink) dashLink.style.display = 'inline';
       } else {
         btn.style.display = 'block';
         userInfo.style.display = 'none';
+        if (dashLink) dashLink.style.display = 'none';
       }
     }
 
