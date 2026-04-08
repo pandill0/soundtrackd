@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Soundtrackd</title>
+  <title>Home — Soundtrackd</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,84 +22,49 @@
       --star: #c8a96e;
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      font-weight: 300;
-      min-height: 100vh;
-      line-height: 1.6;
-    }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
 
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.06) 0%, transparent 70%);
+      background:
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(74,158,107,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 30% at 80% 100%, rgba(74,158,107,0.04) 0%, transparent 60%);
       pointer-events: none;
       z-index: 0;
     }
 
+    nav, .page-wrap, footer { position: relative; z-index: 1; }
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
     a { color: inherit; text-decoration: none; }
 
     /* ── NAV ── */
-    nav {
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: rgba(10,15,11,0.92);
-      backdrop-filter: blur(12px);
-      z-index: 100;
-    }
-
-    .nav-inner {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.25rem 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,15,11,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1.5rem; }
     .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--accent); flex-shrink: 0; cursor: pointer; }
     .logo span { font-style: italic; color: var(--text); }
-
-    .nav-links { display: flex; gap: 1.5rem; font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 1; }
-    .nav-links a { white-space: nowrap; transition: color 0.2s; }
+    .nav-links { display: flex; gap: 1.5rem; font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; }
+    .nav-links a { white-space: nowrap; transition: color 0.2s; flex-shrink: 0; }
     .nav-links a:hover { color: var(--text); }
-    .nav-links a.active { color: var(--accent); }
-
+    @media (max-width: 780px) { .nav-links a:nth-child(3) { display: none; } }
+    @media (max-width: 680px) { .nav-links a:nth-child(2) { display: none; } }
     @media (max-width: 580px) { .nav-links { display: none; } }
 
     .nav-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; margin-left: auto; }
-
-    .btn-signin {
-      font-family: 'Nunito', sans-serif;
-      font-size: 0.8rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 0.5rem 1.25rem;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+    .btn-signin { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
     .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
-
     .search-bar { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); padding: 0.5rem 1rem; width: 180px; transition: border-color 0.2s; }
     .search-bar:focus-within { border-color: rgba(200,169,110,0.4); }
     .search-bar input { background: transparent; border: none; outline: none; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.85rem; width: 100%; }
     .search-bar input::placeholder { color: var(--muted); }
     .search-icon { color: var(--muted); font-size: 14px; }
-
-    /* bell */
     .bell-btn { position: relative; background: transparent; border: 1px solid var(--border); color: var(--muted); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
     .bell-btn:hover { border-color: var(--accent); color: var(--accent); }
     .bell-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; display: none; }
 
     /* notif panel */
-    .notif-panel { position: fixed; top: 64px; right: 2rem; width: 300px; background: var(--surface); border: 1px solid var(--border); z-index: 200; max-height: 400px; overflow-y: auto; display: none; }
+    .notif-panel { position: fixed; top: 64px; right: 2rem; width: 300px; background: var(--surface); border: 1px solid var(--border); z-index: 200; max-height: 400px; overflow-y: auto; display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
     .notif-panel.open { display: block; }
     .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
     .notif-clear { cursor: pointer; font-size: 0.7rem; color: var(--accent); }
@@ -109,372 +74,144 @@
     .notif-dot.read { background: transparent; }
     .notif-empty { padding: 1rem; font-size: 0.82rem; color: var(--muted); text-align: center; }
 
-    /* ── PAGE ── */
-    .page-wrap {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ── DASH HEADER ── */
-    .dash-header {
-      padding: 2.5rem 0 2rem;
-      border-bottom: 1px solid var(--border);
+    /* ── HERO BACKGROUND ── */
+    .hero-wrap { position: relative; overflow: hidden; }
+    .hero-wrap .page-wrap { position: relative; z-index: 2; }
+    .hero-bg {
+      position: absolute;
+      inset: -28% -6%;
+      z-index: 0;
       display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 1.5rem;
+      gap: 6px;
+      opacity: 0.14;
+      transform: rotate(-5deg) translateX(0);
+      animation: heroBgScroll 60s linear infinite;
+      pointer-events: none;
+      will-change: transform;
     }
-
-    .dash-greeting {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
+    @keyframes heroBgScroll {
+      from { transform: rotate(-5deg) translateX(0); }
+      to   { transform: rotate(-5deg) translateX(-50%); }
     }
-
-    .dash-greeting em { font-style: italic; color: var(--accent); }
-
-    .dash-sub {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-top: 0.4rem;
-    }
-
-    .dash-stats {
-      display: flex;
-      gap: 2rem;
-      flex-shrink: 0;
-    }
-
-    .dash-stat {
-      text-align: right;
-    }
-
-    .dash-stat-num {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      color: var(--accent);
-      line-height: 1;
-    }
-
-    .dash-stat-label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-
-    /* ── TWO-COL LAYOUT ── */
-    .dash-grid {
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 2.5rem;
-      padding: 2.5rem 0 4rem;
-      align-items: start;
-    }
-
-    @media (max-width: 720px) {
-      .dash-grid { grid-template-columns: 1fr; }
-      .dash-sidebar { order: -1; }
-    }
-
-    /* ── SECTION HEADERS ── */
-    .dash-section-title {
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .dash-section-title::after {
+    .hero-bg-col { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .hero-bg-col:nth-child(even) { margin-top: -58px; }
+    .hero-bg-block { width: 108px; height: 108px; border-radius: 4px; flex-shrink: 0; overflow: hidden; background: var(--surface2); }
+    .hero-bg-block img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.55) brightness(0.85); }
+    .hero-wrap::before {
       content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(to right, var(--bg) 0%, transparent 22%, transparent 78%, var(--bg) 100%),
+        linear-gradient(to bottom, transparent 30%, var(--bg) 88%);
+      pointer-events: none;
     }
 
-    /* ── ACTIVITY FEED ── */
-    .feed-list { display: flex; flex-direction: column; gap: 0; }
-
-    .feed-item {
-      display: flex;
-      gap: 1rem;
-      padding: 1.1rem 0;
-      border-bottom: 1px solid var(--border);
-      align-items: flex-start;
-      transition: background 0.15s;
+    /* ── DASH GREETING (replaces marketing hero) ── */
+    .dash-hero {
+      padding: 3rem 0 2.5rem;
+      position: relative;
+      z-index: 2;
     }
+    .dash-eyebrow { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem; }
+    .dash-greeting { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.5rem; }
+    .dash-greeting em { font-style: italic; color: var(--accent); }
+    .dash-stats { display: flex; gap: 2rem; margin-top: 1rem; }
+    .dash-stat-num { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--text); line-height: 1; }
+    .dash-stat-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; margin-top: 1px; }
+    .dash-stat a { transition: color 0.2s; }
+    .dash-stat a:hover .dash-stat-num { color: var(--accent); }
 
-    .feed-item:last-child { border-bottom: none; }
+    /* ── SECTION DIVIDER ── */
+    .section-divider { display: flex; align-items: center; gap: 1.5rem; padding: 0; margin-bottom: 2rem; }
+    .section-divider h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 400; white-space: nowrap; color: var(--text); }
+    .section-divider .line { flex: 1; height: 1px; background: var(--border); }
+    .section-divider .see-all { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); cursor: pointer; white-space: nowrap; transition: color 0.2s; }
+    .section-divider .see-all:hover { color: var(--accent); }
 
-    .feed-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--surface2);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 0.9rem;
-      color: var(--accent);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
+    /* ── FEATURED SCROLL ── */
+    .featured-section { padding: 2rem 0 0; position: relative; }
+    .featured-scroll-wrap { overflow-x: auto; scroll-snap-type: x mandatory; display: flex; gap: 0; cursor: grab; user-select: none; scrollbar-width: none; }
+    .featured-scroll-wrap::-webkit-scrollbar { display: none; }
+    .featured-scroll-wrap.dragging { cursor: grabbing; }
+    .featured-card { display: flex; gap: 0; flex-shrink: 0; width: 100%; scroll-snap-align: start; border: 1px solid var(--border); background: var(--surface); overflow: hidden; border-radius: 4px; transition: border-color 0.2s; }
+    .featured-card:hover { border-color: rgba(255,255,255,0.13); }
+    .featured-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
+    .featured-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .featured-card:hover .featured-cover img { transform: scale(1.04); }
+    .featured-info { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+    .featured-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
+    .featured-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 24px rgba(74,158,107,0.12); }
+    .featured-artist { font-size: 0.88rem; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
+    .featured-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .featured-chart { display: flex; align-items: flex-end; gap: 3px; height: 28px; margin: 0.85rem 0 0.1rem; }
+    .featured-bar { flex: 1; background: var(--star); opacity: 0.45; border-radius: 2px 2px 0 0; transition: height 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; min-height: 2px; }
+    .featured-bar.has-data { opacity: 0.75; }
+    .featured-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.6rem; }
+    .featured-avg { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--star); }
+    .featured-nav { display: flex; gap: 6px; align-items: center; }
+    .featured-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    .featured-dot:hover { transform: scale(1.4); }
+    .featured-dot.active { background: var(--accent); transform: scale(1.3); }
+    .featured-view-btn { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 5px 14px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s; border-radius: 2px; }
+    .featured-view-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .featured-attribution { position: absolute; bottom: -1.35rem; right: 0; font-size: 0.62rem; color: var(--muted); opacity: 0.5; letter-spacing: 0.05em; pointer-events: none; }
 
-    .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    /* ── ALBUM GRID ── */
+    .trending-section { padding: 0 0 3rem; }
+    .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
+    @media (max-width: 580px) { .album-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; } }
+    .album-card { cursor: pointer; display: block; text-decoration: none; color: inherit; }
+    .album-art { width: 100%; aspect-ratio: 1; background: var(--surface2); margin-bottom: 0.75rem; position: relative; overflow: hidden; }
+    .album-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .album-art .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .album-card:hover .overlay { opacity: 1; }
+    .overlay-btn { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 0.4rem 0.9rem; background: transparent; cursor: pointer; }
+    .album-rank { position: absolute; top: 8px; left: 8px; font-family: 'Playfair Display', serif; font-size: 0.75rem; color: var(--accent); background: rgba(13,13,15,0.8); padding: 2px 7px; }
+    .album-title { font-size: 0.88rem; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .album-artist { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .feed-cover {
-      width: 46px;
-      height: 46px;
-      background: var(--surface2);
-      flex-shrink: 0;
-      overflow: hidden;
-    }
+    /* ── FRIENDS FEED ── */
+    .feed-section { padding: 0 0 3rem; }
 
-    .feed-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-    .feed-body { flex: 1; min-width: 0; }
-
-    .feed-who {
-      font-size: 0.82rem;
-      margin-bottom: 3px;
-      line-height: 1.4;
-    }
-
-    .feed-who a { color: var(--accent2); font-weight: 500; }
-    .feed-who a:hover { text-decoration: underline; }
-    .feed-who .feed-album-link { color: var(--text); font-weight: 500; }
-    .feed-who .feed-album-link:hover { color: var(--accent); }
-
-    .feed-stars { display: flex; gap: 2px; margin-bottom: 4px; }
-    .feed-star { font-size: 10px; color: var(--star); }
-    .feed-star.empty { color: var(--surface2); }
-
-    .feed-review {
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.55;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .feed-time {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-top: 4px;
-      opacity: 0.7;
-    }
-
-    .feed-type-tag {
-      display: inline-block;
-      font-size: 0.62rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      padding: 1px 6px;
-      border-radius: 2px;
-      margin-bottom: 4px;
-    }
-
-    .feed-type-tag.tag-review { color: var(--accent2); border-color: rgba(124,111,205,0.3); }
-    .feed-type-tag.tag-rating { color: var(--star); border-color: rgba(200,169,110,0.3); }
-    .feed-type-tag.tag-follow { color: var(--accent); border-color: rgba(74,158,107,0.3); }
-
-    .feed-empty {
-      padding: 2.5rem 0;
-      font-size: 0.88rem;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.8;
-    }
-
-    .feed-empty a { color: var(--accent); }
-
-    /* filter tabs */
-    .feed-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 1.5rem;
-      border: 1px solid var(--border);
-      width: fit-content;
-    }
-
-    .feed-tab {
-      font-size: 0.72rem;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: 6px 16px;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      font-family: 'Nunito', sans-serif;
-      transition: all 0.15s;
-      border-right: 1px solid var(--border);
-    }
-
+    .feed-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid var(--border); width: fit-content; }
+    .feed-tab { font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); padding: 6px 16px; cursor: pointer; border: none; background: transparent; font-family: 'Nunito', sans-serif; transition: all 0.15s; border-right: 1px solid var(--border); }
     .feed-tab:last-child { border-right: none; }
     .feed-tab:hover { color: var(--text); background: var(--surface); }
     .feed-tab.active { color: var(--accent); background: var(--surface); }
 
-    /* load more */
-    .feed-more {
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-align: center;
-      padding: 1.25rem 0 0;
-      cursor: pointer;
-      transition: color 0.2s;
-      letter-spacing: 0.04em;
-    }
+    .feed-list { display: flex; flex-direction: column; gap: 0; }
+    .feed-item { display: flex; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--accent); border: 1px solid var(--border); overflow: hidden; }
+    .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .feed-cover { width: 48px; height: 48px; background: var(--surface2); flex-shrink: 0; overflow: hidden; }
+    .feed-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-who { font-size: 0.83rem; margin-bottom: 3px; line-height: 1.4; }
+    .feed-who a.user-link { color: var(--accent2); font-weight: 500; }
+    .feed-who a.user-link:hover { text-decoration: underline; }
+    .feed-who a.album-link { color: var(--text); font-weight: 500; }
+    .feed-who a.album-link:hover { color: var(--accent); }
+    .feed-stars { font-size: 10px; color: var(--star); letter-spacing: 1px; margin-bottom: 4px; }
+    .feed-review { font-size: 0.82rem; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .feed-time { font-size: 0.7rem; color: var(--muted); margin-top: 4px; opacity: 0.65; }
+    .mutual-tag { font-size: 0.62rem; color: var(--accent); opacity: 0.65; margin-left: 3px; }
+
+    .feed-empty { padding: 2.5rem 0; font-size: 0.88rem; color: var(--muted); text-align: center; line-height: 2; }
+    .feed-empty a { color: var(--accent); }
+    .feed-more { font-size: 0.78rem; color: var(--muted); text-align: center; padding: 1.25rem 0 0; cursor: pointer; transition: color 0.2s; letter-spacing: 0.04em; }
     .feed-more:hover { color: var(--accent); }
 
-    /* ── SIDEBAR ── */
-    .dash-sidebar { display: flex; flex-direction: column; gap: 2rem; }
-
-    /* who to follow */
-    .suggest-list { display: flex; flex-direction: column; gap: 0; }
-
-    .suggest-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .suggest-item:last-child { border-bottom: none; }
-
-    .suggest-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--surface2);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 0.85rem;
-      color: var(--accent);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .suggest-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-    .suggest-name { flex: 1; font-size: 0.85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .suggest-meta { font-size: 0.7rem; color: var(--muted); }
-
-    .suggest-follow-btn {
-      font-size: 0.68rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      border: 1px solid var(--accent);
-      background: transparent;
-      color: var(--accent);
-      padding: 3px 10px;
-      cursor: pointer;
-      font-family: 'Nunito', sans-serif;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .suggest-follow-btn:hover { background: var(--accent); color: #0a0f0b; }
-    .suggest-follow-btn.following { border-color: var(--border); color: var(--muted); }
-    .suggest-follow-btn.following:hover { border-color: var(--danger); color: var(--danger); }
-
-    /* your top-rated recent */
-    .your-recent-list { display: flex; flex-direction: column; gap: 0; }
-
-    .your-recent-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.65rem 0;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .your-recent-item:last-child { border-bottom: none; }
-    .your-recent-item:hover .your-recent-title { color: var(--accent); }
-
-    .your-recent-thumb {
-      width: 36px;
-      height: 36px;
-      background: var(--surface2);
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .your-recent-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-    .your-recent-info { flex: 1; min-width: 0; }
-    .your-recent-title { font-size: 0.82rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s; }
-    .your-recent-artist { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .your-recent-rating { font-size: 0.78rem; color: var(--star); flex-shrink: 0; font-family: 'Playfair Display', serif; }
-
-    /* mutuals panel */
-    .mutual-list { display: flex; flex-direction: column; gap: 0; }
-
-    .mutual-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.65rem 0;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-    }
-
-    .mutual-item:last-child { border-bottom: none; }
-
-    .mutual-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--surface2);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      color: var(--accent);
-      font-family: 'Playfair Display', serif;
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .mutual-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .mutual-name { flex: 1; font-size: 0.82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .mutual-rating-count { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
-
-    /* skeleton pulse */
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 0.8; }
-    }
-
+    /* pulse skeleton */
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
     .skel { background: var(--surface2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
 
-    /* footer */
+    /* ── FOOTER ── */
     footer { border-top: 1px solid var(--border); padding: 1.5rem 0; }
-    .footer-inner { max-width: 960px; margin: 0 auto; padding: 0 2rem; display: flex; flex-direction: column; gap: 4px; }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; flex-direction: column; gap: 4px; }
     .footer-logo { font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1rem; margin-bottom: 2px; }
     footer span { font-size: 0.75rem; color: var(--muted); }
   </style>
@@ -486,7 +223,6 @@
     <div class="nav-inner">
       <div class="logo" onclick="window.location.href='index.html'">Sound<span>trackd</span></div>
       <div class="nav-links">
-        <a href="dash.html" class="active">Dashboard</a>
         <a href="lists.html">Lists</a>
         <a href="charts.html">Charts</a>
         <a href="members.html">Members</a>
@@ -501,7 +237,7 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span class="bell-badge" id="bellBadge"></span>
         </button>
-        <a href="profile.html" style="font-size:0.82rem;color:var(--accent);letter-spacing:0.03em" id="userEmail"></a>
+        <a href="profile.html" style="font-size:0.82rem;color:var(--accent);letter-spacing:0.03em;text-shadow:0 0 10px rgba(74,158,107,0.3)" id="userEmail"></a>
         <button class="btn-signin" onclick="signOut()">Sign out</button>
       </div>
     </div>
@@ -513,107 +249,95 @@
     <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
   </div>
 
+  <!-- HERO WRAP (with background wallpaper) -->
+  <div class="hero-wrap">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="page-wrap">
+      <div class="dash-hero">
+        <p class="dash-eyebrow" id="dashEyebrow">Welcome back</p>
+        <h1 class="dash-greeting">Hey, <em id="greetName">...</em></h1>
+        <div class="dash-stats" id="dashStats" style="display:none">
+          <div class="dash-stat">
+            <a href="profile.html">
+              <div class="dash-stat-num" id="statRatings">—</div>
+              <div class="dash-stat-label">Ratings</div>
+            </a>
+          </div>
+          <div class="dash-stat">
+            <a href="profile.html">
+              <div class="dash-stat-num" id="statFollowing">—</div>
+              <div class="dash-stat-label">Following</div>
+            </a>
+          </div>
+          <div class="dash-stat">
+            <a href="profile.html">
+              <div class="dash-stat-num" id="statFollowers">—</div>
+              <div class="dash-stat-label">Followers</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="page-wrap">
 
-    <!-- HEADER -->
-    <div class="dash-header">
-      <div>
-        <div class="dash-greeting">Good to see you, <em id="greetName">...</em></div>
-        <div class="dash-sub" id="dashSub">Here's what's happening in your world.</div>
+    <!-- FEATURED SCROLL -->
+    <section class="featured-section">
+      <div class="section-divider" style="margin-bottom:1rem">
+        <h2>New from popular artists</h2>
+        <div class="line"></div>
+        <div class="featured-nav" id="featuredDots"></div>
       </div>
-      <div class="dash-stats" id="dashStats" style="display:none">
-        <div class="dash-stat">
-          <div class="dash-stat-num" id="statRatings">—</div>
-          <div class="dash-stat-label">Ratings</div>
-        </div>
-        <div class="dash-stat">
-          <div class="dash-stat-num" id="statFollowing">—</div>
-          <div class="dash-stat-label">Following</div>
-        </div>
-        <div class="dash-stat">
-          <div class="dash-stat-num" id="statFollowers">—</div>
-          <div class="dash-stat-label">Followers</div>
+      <div class="featured-scroll-wrap" id="featuredScroll"></div>
+      <div class="featured-attribution">chart data from last.fm</div>
+    </section>
+
+    <!-- DISCUSS YOUR FAVORITES -->
+    <section class="trending-section" style="padding-top:2.5rem">
+      <div class="section-divider">
+        <h2>Discuss your favorites</h2>
+        <div class="line"></div>
+      </div>
+      <div class="album-grid" id="albumGrid"></div>
+    </section>
+
+    <!-- FRIENDS FEED -->
+    <section class="feed-section">
+      <div class="section-divider">
+        <h2>Friends' activity</h2>
+        <div class="line"></div>
+        <div class="feed-tabs" style="margin-bottom:0;border:none">
+          <button class="feed-tab active" onclick="setFeedFilter('all',this)">All</button>
+          <button class="feed-tab" onclick="setFeedFilter('review',this)">Reviews</button>
+          <button class="feed-tab" onclick="setFeedFilter('rating',this)">Ratings</button>
         </div>
       </div>
-    </div>
-
-    <!-- MAIN + SIDEBAR -->
-    <div class="dash-grid">
-
-      <!-- MAIN FEED -->
-      <main>
-        <div class="dash-section-title">Friends' activity</div>
-
-        <!-- filter tabs -->
-        <div class="feed-tabs">
-          <button class="feed-tab active" data-filter="all" onclick="setFeedFilter('all',this)">All</button>
-          <button class="feed-tab" data-filter="review" onclick="setFeedFilter('review',this)">Reviews</button>
-          <button class="feed-tab" data-filter="rating" onclick="setFeedFilter('rating',this)">Ratings</button>
-        </div>
-
-        <div class="feed-list" id="feedList">
-          <!-- skeleton -->
-          <div class="feed-item" id="feedSkel">
-            <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0"></div>
-            <div style="flex:1;display:flex;gap:0.75rem;">
-              <div class="skel" style="width:46px;height:46px;flex-shrink:0"></div>
-              <div style="flex:1;">
-                <div class="skel" style="height:12px;width:60%;margin-bottom:8px"></div>
-                <div class="skel" style="height:10px;width:80%"></div>
-              </div>
-            </div>
+      <div class="feed-list" id="feedList">
+        <div class="feed-item" style="border:none">
+          <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;gap:0.75rem">
+            <div class="skel" style="width:48px;height:48px;flex-shrink:0"></div>
+            <div style="flex:1"><div class="skel" style="height:11px;width:55%;margin-bottom:8px"></div><div class="skel" style="height:10px;width:75%"></div></div>
           </div>
         </div>
-
-        <div class="feed-more" id="feedMore" style="display:none" onclick="loadMoreFeed()">Load more →</div>
-      </main>
-
-      <!-- SIDEBAR -->
-      <aside class="dash-sidebar">
-
-        <!-- your recent ratings -->
-        <div>
-          <div class="dash-section-title">Your recent ratings</div>
-          <div class="your-recent-list" id="yourRecentList">
-            <div class="skel" style="height:36px;margin-bottom:6px"></div>
-            <div class="skel" style="height:36px;margin-bottom:6px"></div>
-            <div class="skel" style="height:36px"></div>
-          </div>
-        </div>
-
-        <!-- mutuals -->
-        <div>
-          <div class="dash-section-title">Mutuals</div>
-          <div class="mutual-list" id="mutualList">
-            <div class="skel" style="height:28px;margin-bottom:6px"></div>
-            <div class="skel" style="height:28px"></div>
-          </div>
-        </div>
-
-        <!-- suggested follows -->
-        <div>
-          <div class="dash-section-title">Suggested members</div>
-          <div class="suggest-list" id="suggestList">
-            <div class="skel" style="height:40px;margin-bottom:6px"></div>
-            <div class="skel" style="height:40px"></div>
-          </div>
-        </div>
-
-      </aside>
-    </div>
+      </div>
+      <div class="feed-more" id="feedMore" style="display:none" onclick="loadMoreFeed()">Load more →</div>
+    </section>
 
   </div>
 
   <footer>
     <div class="footer-inner">
       <div class="footer-logo">Soundtrackd</div>
-      <span>A place for music lovers.</span>
+      <span>A place for music lovers. Not affiliated with any rights holders.</span>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const { createClient } = supabase;
+    const WORKER = 'https://throbbing-meadow-440e.spacedemon324.workers.dev';
     const sb = createClient(
       'https://cmjemqmxnpusluzyiwyj.supabase.co',
       'sb_publishable_2w5SVBrYjBEWbJ8Rw3GRbQ_Z-EVXQ41'
@@ -621,9 +345,8 @@
 
     let currentUser = null;
     let currentUsername = null;
-    let followingIds = [];   // IDs current user follows
-    let followerIds = [];    // IDs that follow current user
-    let mutualIds = [];      // intersection
+    let followingIds = [];
+    let mutualIds = [];
 
     // feed state
     let allFeedItems = [];
@@ -631,84 +354,361 @@
     const FEED_PAGE = 20;
     let feedOffset = 0;
 
+    // ── CACHING (shared with index.html via same keys) ────
+    const ALBUMS_KEY      = 'st_opinion_albums';
+    const ALBUMS_EXP_KEY  = 'st_opinion_albums_exp';
+    const FEATURED_KEY    = 'st_featured_albums_v2';
+    const FEATURED_EXP_KEY= 'st_featured_albums_v2_exp';
+    const HERO_KEY        = 'st_hero_bg';
+    const HERO_EXP_KEY    = 'st_hero_bg_exp';
+    const ALBUMS_TTL      = 30 * 60 * 1000;
+    const FEATURED_TTL    = 6 * 60 * 60 * 1000;
+    const LASTFM_KEY      = 'c04398910fb731d86c172d1a8e658d4a';
+
+    function getCachedAlbums(key, expKey) {
+      try {
+        const d = sessionStorage.getItem(key);
+        const exp = parseInt(sessionStorage.getItem(expKey) || '0');
+        if (d && Date.now() < exp) return JSON.parse(d);
+      } catch {}
+      return null;
+    }
+    function setCachedAlbums(key, expKey, data) {
+      try {
+        sessionStorage.setItem(key, JSON.stringify(data));
+        sessionStorage.setItem(expKey, Date.now() + ALBUMS_TTL);
+      } catch {}
+    }
+    function getFeaturedCache() {
+      try {
+        const d = localStorage.getItem(FEATURED_KEY);
+        const exp = parseInt(localStorage.getItem(FEATURED_EXP_KEY) || '0');
+        if (d && Date.now() < exp) return JSON.parse(d);
+      } catch {}
+      return null;
+    }
+    function setFeaturedCache(data) {
+      try {
+        localStorage.setItem(FEATURED_KEY, JSON.stringify(data));
+        localStorage.setItem(FEATURED_EXP_KEY, String(Date.now() + FEATURED_TTL));
+      } catch {}
+    }
+
+    // ── HERO BG ───────────────────────────────────────────
+    const HERO_ALBUMS = [
+      { title: 'Midnights', artist: 'Taylor Swift' },{ title: 'Renaissance', artist: 'Beyoncé' },
+      { title: 'Un Verano Sin Ti', artist: 'Bad Bunny' },{ title: 'GNX', artist: 'Kendrick Lamar' },
+      { title: 'Hit Me Hard and Soft', artist: 'Billie Eilish' },{ title: 'After Hours', artist: 'The Weeknd' },
+      { title: 'Future Nostalgia', artist: 'Dua Lipa' },{ title: 'IGOR', artist: 'Tyler the Creator' },
+      { title: 'Random Access Memories', artist: 'Daft Punk' },{ title: 'AM', artist: 'Arctic Monkeys' },
+      { title: 'Blonde', artist: 'Frank Ocean' },{ title: 'To Pimp a Butterfly', artist: 'Kendrick Lamar' },
+      { title: 'OK Computer', artist: 'Radiohead' },{ title: 'Dark Side of the Moon', artist: 'Pink Floyd' },
+      { title: 'Rumours', artist: 'Fleetwood Mac' },{ title: 'In Rainbows', artist: 'Radiohead' },
+      { title: 'Currents', artist: 'Tame Impala' },{ title: 'Nevermind', artist: 'Nirvana' },
+      { title: 'Thriller', artist: 'Michael Jackson' },{ title: 'Purple Rain', artist: 'Prince' },
+      { title: 'My Beautiful Dark Twisted Fantasy', artist: 'Kanye West' },{ title: 'The College Dropout', artist: 'Kanye West' },
+      { title: 'Graduation', artist: 'Kanye West' },{ title: '808s & Heartbreak', artist: 'Kanye West' },
+      { title: 'The Chronic', artist: 'Dr. Dre' },{ title: 'Illmatic', artist: 'Nas' },
+      { title: 'Loveless', artist: 'My Bloody Valentine' },{ title: 'Pet Sounds', artist: 'The Beach Boys' },
+      { title: 'Abbey Road', artist: 'The Beatles' },{ title: 'Revolver', artist: 'The Beatles' },
+      { title: 'Unknown Pleasures', artist: 'Joy Division' },{ title: 'Aladdin Sane', artist: 'David Bowie' },
+      { title: 'Wish You Were Here', artist: 'Pink Floyd' },{ title: 'Sticky Fingers', artist: 'The Rolling Stones' },
+    ];
+
+    function populateHeroBg(albums) {
+      const bg = document.getElementById('heroBg');
+      if (!bg || !albums.length) return;
+      const withCovers = albums.filter(a => a.cover);
+      if (!withCovers.length) return;
+      const shuffle = arr => arr.slice().sort(() => Math.random() - 0.5);
+      const COLS = 22, ROWS = 6;
+      bg.innerHTML = '';
+      const colData = Array.from({ length: COLS }, () => {
+        const pool = [];
+        while (pool.length < ROWS) pool.push(...withCovers);
+        return shuffle(pool).slice(0, ROWS);
+      });
+      for (let set = 0; set < 2; set++) {
+        const order = shuffle(colData.map((_, i) => i));
+        order.forEach(ci => {
+          const col = document.createElement('div');
+          col.className = 'hero-bg-col';
+          const imgs = set === 0 ? colData[ci] : shuffle(colData[ci]);
+          imgs.forEach(a => {
+            const block = document.createElement('div');
+            block.className = 'hero-bg-block';
+            const img = document.createElement('img');
+            img.src = a.cover; img.alt = ''; img.loading = 'lazy';
+            block.appendChild(img); col.appendChild(block);
+          });
+          bg.appendChild(col);
+        });
+      }
+    }
+
+    async function loadHeroBgAlbums() {
+      const cached = getCachedAlbums(HERO_KEY, HERO_EXP_KEY);
+      if (cached && cached.length) { populateHeroBg(cached); return; }
+      try {
+        const results = await Promise.all(HERO_ALBUMS.map(async a => {
+          try {
+            const r = await fetch(`${WORKER}/search/album?q=${encodeURIComponent(a.title+' '+a.artist)}&limit=1`);
+            const d = await r.json();
+            const hit = d.data?.[0];
+            if (!hit?.cover_medium) return null;
+            return { cover: hit.cover_medium };
+          } catch { return null; }
+        }));
+        const valid = results.filter(a => a?.cover);
+        if (valid.length) { setCachedAlbums(HERO_KEY, HERO_EXP_KEY, valid); populateHeroBg(valid); }
+      } catch {}
+    }
+
+    // Placeholder color blocks while images load
+    (function() {
+      const bg = document.getElementById('heroBg');
+      if (!bg) return;
+      const colors = ['#0f1a12','#111a0f','#0d1714','#131a10','#0a1510','#121f14','#0e1a0e','#101510','#162014','#0d1a10','#111e12','#0f1612'];
+      for (let c = 0; c < 44; c++) {
+        const col = document.createElement('div');
+        col.className = 'hero-bg-col';
+        for (let r = 0; r < 6; r++) {
+          const block = document.createElement('div');
+          block.className = 'hero-bg-block';
+          block.style.background = Math.random() > 0.88 ? 'rgba(74,158,107,0.12)' : colors[Math.floor(Math.random() * colors.length)];
+          col.appendChild(block);
+        }
+        bg.appendChild(col);
+      }
+    })();
+
+    // ── ALBUM GRID ────────────────────────────────────────
+    const OPINION_ALBUMS = [
+      { id: '4SZko61aMnmgvNhfhgTuD3', title: 'Graduation', artist: 'Kanye West', cover: '' },
+      { id: '7ycBtnsMtyVbbwTfJwRjSP', title: 'To Pimp a Butterfly', artist: 'Kendrick Lamar', cover: '' },
+      { id: '3mH6qwIy9crq0I9YQbOuDf', title: 'Blonde', artist: 'Frank Ocean', cover: '' },
+      { id: '4LH4d3cOWNNsVw41Gqt2kv', title: 'Funeral', artist: 'Arcade Fire', cover: '' },
+      { id: '6UcNnMGniYl5RObNbfesiY', title: 'Fetch the Bolt Cutters', artist: 'Fiona Apple', cover: '' },
+      { id: '6dVIqQ8qmQ5GBnJ9shOYGE', title: 'OK Computer', artist: 'Radiohead', cover: '' },
+      { id: '5zi7WsKlIiUXv09tbGLKsE', title: 'Hit Me Hard and Soft', artist: 'Billie Eilish', cover: '' },
+      { id: '6s84HNHmFNsNFLSPFqqhLQ', title: 'GNX', artist: 'Kendrick Lamar', cover: '' },
+    ];
+
+    function renderAlbumGrid(albums) {
+      const grid = document.getElementById('albumGrid');
+      grid.innerHTML = '';
+      if (!albums.length) { grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;grid-column:1/-1">Could not load albums right now.</p>'; return; }
+      albums.forEach((a, i) => {
+        grid.innerHTML += `
+          <a href="album.html?id=${a.id}" class="album-card">
+            <div class="album-art">
+              ${a.cover ? `<img src="${a.cover}" alt="${a.title}">` : ''}
+              <div class="overlay"><span class="overlay-btn">View album</span></div>
+              <div class="album-rank">${i + 1}</div>
+            </div>
+            <div class="album-title">${a.title}</div>
+            <div class="album-artist">${a.artist}</div>
+          </a>`;
+      });
+    }
+
+    function renderSkeletons() {
+      const grid = document.getElementById('albumGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        grid.innerHTML += `<div class="album-card"><div class="album-art skel"></div><div class="skel" style="height:12px;margin-bottom:6px;margin-top:0.75rem"></div><div class="skel" style="height:10px;width:65%"></div></div>`;
+      }
+    }
+
+    async function loadTrendingAlbums() {
+      const cached = getCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY);
+      if (cached && cached.length) { renderAlbumGrid(cached); fetchAndRenderAlbums(true); return; }
+      renderSkeletons();
+      await fetchAndRenderAlbums(false);
+    }
+
+    async function fetchAndRenderAlbums(silent) {
+      try {
+        const results = await Promise.all(OPINION_ALBUMS.map(async a => {
+          try {
+            const r = await fetch(`${WORKER}/search/album?q=${encodeURIComponent(a.title+' '+a.artist)}&limit=1`);
+            const d = await r.json();
+            const hit = d.data?.[0];
+            if (!hit) return a;
+            return { id: String(hit.id), title: hit.title, artist: hit.artist.name, cover: hit.cover_medium };
+          } catch { return a; }
+        }));
+        setCachedAlbums(ALBUMS_KEY, ALBUMS_EXP_KEY, results);
+        if (!silent) renderAlbumGrid(results);
+      } catch { if (!silent) renderAlbumGrid(OPINION_ALBUMS); }
+    }
+
+    // ── FEATURED SCROLL ───────────────────────────────────
+    let featuredAlbums = [];
+    let featuredAutoInterval = null;
+    let featuredUserActive = false;
+
+    async function loadFeaturedScrollCached() {
+      const cached = getFeaturedCache();
+      if (cached && cached.length) { featuredAlbums = cached; renderFeaturedScroll(); return; }
+      await loadFeaturedScroll();
+    }
+
+    async function loadFeaturedScroll() {
+      try {
+        const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=chart.getTopArtists&api_key=${LASTFM_KEY}&format=json&limit=7`);
+        const d = await r.json();
+        const artists = d.artists?.artist || [];
+        const results = await Promise.all(artists.map(async (artist, rank) => {
+          try {
+            const sr = await fetch(`${WORKER}/search/artist?q=${encodeURIComponent(artist.name)}&limit=1`);
+            const sd = await sr.json();
+            const deezerArtist = sd.data?.[0];
+            if (!deezerArtist) return null;
+            const ar = await fetch(`${WORKER}/artist/${deezerArtist.id}/albums?limit=15`);
+            const ad = await ar.json();
+            const albums = ad.data || [];
+            const pick = albums.find(a => a.record_type === 'album') || albums.find(a => a.record_type === 'ep') || albums[0];
+            if (!pick) return null;
+            return { id: String(pick.id), title: pick.title, artist: artist.name, cover: pick.cover_medium || pick.cover || null, release_date: pick.release_date || null, rank: rank + 1, listeners: Number(artist.listeners || 0) };
+          } catch { return null; }
+        }));
+        featuredAlbums = results.filter(a => a && a.cover);
+        setFeaturedCache(featuredAlbums);
+        renderFeaturedScroll();
+      } catch {}
+    }
+
+    function renderFeaturedScroll() {
+      const wrap = document.getElementById('featuredScroll');
+      const dots = document.getElementById('featuredDots');
+      if (!featuredAlbums.length) { wrap.style.display = 'none'; return; }
+      wrap.innerHTML = ''; dots.innerHTML = '';
+      const BELL = [0.15,0.3,0.6,0.9,1,0.85,0.55,0.3,0.15,0.08];
+      const bellBars = BELL.map(h => `<div class="featured-bar" style="height:${Math.round(h*24)}px"></div>`).join('');
+      featuredAlbums.forEach((a, i) => {
+        const desc = a.listeners ? `${a.listeners.toLocaleString()} listeners this week` : '';
+        wrap.innerHTML += `
+          <div class="featured-card" id="fc-${i}" onclick="window.location.href='album.html?id=${a.id}'" style="cursor:pointer">
+            <div class="featured-cover">${a.cover ? `<img src="${a.cover}" alt="${a.title}">` : ''}</div>
+            <div class="featured-info">
+              <div>
+                <div class="featured-label">#${a.rank} this week</div>
+                <div class="featured-title">${a.title}</div>
+                <div class="featured-artist">${a.artist}</div>
+                <div class="featured-desc">${desc}</div>
+                <div class="featured-chart" id="fc-chart-${i}">${bellBars}</div>
+              </div>
+              <div class="featured-footer">
+                <span class="featured-avg" title="Soundtrackd avg rating">—</span>
+                <button class="featured-view-btn" onclick="event.stopPropagation();window.location.href='album.html?id=${a.id}'">View album →</button>
+              </div>
+            </div>
+          </div>`;
+        const dot = document.createElement('div');
+        dot.className = 'featured-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => { featuredUserActive = true; scrollToFeatured(i); setTimeout(() => featuredUserActive = false, 8000); };
+        dots.appendChild(dot);
+      });
+      let isDown = false, startX, scrollLeft;
+      wrap.addEventListener('mousedown', e => { isDown = true; featuredUserActive = true; wrap.classList.add('dragging'); startX = e.pageX - wrap.offsetLeft; scrollLeft = wrap.scrollLeft; });
+      wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
+      wrap.addEventListener('mouseup', () => { isDown = false; wrap.classList.remove('dragging'); setTimeout(() => featuredUserActive = false, 8000); });
+      wrap.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - wrap.offsetLeft; wrap.scrollLeft = scrollLeft - (x - startX); });
+      wrap.addEventListener('scroll', () => {
+        const idx = Math.round(wrap.scrollLeft / wrap.offsetWidth);
+        document.querySelectorAll('.featured-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
+      });
+      wrap.addEventListener('mouseenter', () => { featuredUserActive = true; });
+      wrap.addEventListener('mouseleave', () => { setTimeout(() => featuredUserActive = false, 3000); });
+      // Load real avg ratings
+      featuredAlbums.forEach(async (a, i) => {
+        if (!a.id) return;
+        const { data } = await sb.from('ratings').select('rating').eq('album_id', a.id);
+        if (!data?.length) return;
+        const avg = data.reduce((s,r) => s + parseFloat(r.rating), 0) / data.length;
+        const avgEl = document.querySelector(`#fc-${i} .featured-avg`);
+        if (avgEl) avgEl.textContent = `★ ${avg.toFixed(1)}`;
+        const buckets = new Array(10).fill(0);
+        data.forEach(r => { const idx = Math.round(parseFloat(r.rating)*2)-1; if (idx>=0&&idx<10) buckets[idx]++; });
+        const peak = Math.max(...buckets, 1);
+        const chartEl = document.getElementById(`fc-chart-${i}`);
+        if (chartEl) chartEl.innerHTML = buckets.map(count => `<div class="featured-bar has-data" style="height:${Math.max(2,Math.round((count/peak)*24))}px"></div>`).join('');
+      });
+      clearInterval(featuredAutoInterval);
+      setTimeout(() => {
+        featuredAutoInterval = setInterval(() => {
+          if (featuredUserActive) return;
+          const currentIdx = Math.round(wrap.scrollLeft / wrap.offsetWidth);
+          scrollToFeatured((currentIdx + 1) % featuredAlbums.length);
+        }, 5000);
+      }, 3000);
+    }
+
+    function scrollToFeatured(idx) {
+      document.getElementById('featuredScroll').scrollTo({ left: idx * document.getElementById('featuredScroll').offsetWidth, behavior: 'smooth' });
+    }
+
     // ── AUTH ──────────────────────────────────────────────
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
       currentUser = session?.user ?? null;
 
       if (!currentUser) {
-        // Not logged in — redirect to index or login
         window.location.href = 'index.html';
         return;
       }
 
-      // Load username
-      const { data: prof } = await sb.from('profiles')
-        .select('username')
-        .eq('id', currentUser.id)
-        .single();
+      const { data: prof } = await sb.from('profiles').select('username').eq('id', currentUser.id).single();
       currentUsername = prof?.username || currentUser.email?.split('@')[0] || 'there';
 
       document.getElementById('greetName').textContent = currentUsername;
       document.getElementById('userEmail').textContent = currentUsername;
-      document.getElementById('userEmail').href = 'profile.html';
 
-      // Fire all sections in parallel
-      await Promise.all([
-        loadStats(),
-        loadFollowGraph(),
-      ]);
+      // Kick off all non-social content immediately
+      loadHeroBgAlbums();
+      loadTrendingAlbums();
+      loadFeaturedScrollCached();
 
-      // These depend on followingIds / followerIds
-      await Promise.all([
-        loadFeed(),
-        loadYourRecent(),
-        loadMutuals(),
-        loadSuggested(),
-      ]);
-
+      // Then load social content
+      await loadSocialData();
       loadNotifications();
     }
 
-    // ── STATS ──────────────────────────────────────────────
-    async function loadStats() {
+    async function loadSocialData() {
+      // Load stats + follow graph in parallel
       const [
         { count: ratingsCount },
         { count: followingCount },
         { count: followersCount },
+        { data: following },
+        { data: followers },
       ] = await Promise.all([
         sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id),
         sb.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', currentUser.id),
         sb.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', currentUser.id),
-      ]);
-
-      document.getElementById('statRatings').textContent = ratingsCount ?? 0;
-      document.getElementById('statFollowing').textContent = followingCount ?? 0;
-      document.getElementById('statFollowers').textContent = followersCount ?? 0;
-      document.getElementById('dashStats').style.display = 'flex';
-    }
-
-    // ── FOLLOW GRAPH ───────────────────────────────────────
-    async function loadFollowGraph() {
-      const [
-        { data: following },
-        { data: followers },
-      ] = await Promise.all([
         sb.from('follows').select('following_id').eq('follower_id', currentUser.id),
         sb.from('follows').select('follower_id').eq('following_id', currentUser.id),
       ]);
 
+      document.getElementById('statRatings').textContent   = ratingsCount ?? 0;
+      document.getElementById('statFollowing').textContent = followingCount ?? 0;
+      document.getElementById('statFollowers').textContent = followersCount ?? 0;
+      document.getElementById('dashStats').style.display   = 'flex';
+
       followingIds = (following || []).map(r => r.following_id);
-      followerIds  = (followers || []).map(r => r.follower_id);
-      mutualIds    = followingIds.filter(id => followerIds.includes(id));
+      const followerIds = (followers || []).map(r => r.follower_id);
+      mutualIds = followingIds.filter(id => followerIds.includes(id));
+
+      await loadFeed();
     }
 
-    // ── FEED ───────────────────────────────────────────────
+    // ── FEED ──────────────────────────────────────────────
     function starsHtml(rating) {
-      const full = Math.floor(rating);
-      const half = rating - full >= 0.5;
-      const empty = 5 - full - (half ? 1 : 0);
-      return '★'.repeat(full) + (half ? '½' : '') + '<span style="opacity:0.2">' + '★'.repeat(empty) + '</span>';
+      const v = parseFloat(rating);
+      const full = Math.floor(v);
+      const half = v - full >= 0.5;
+      return '★'.repeat(full) + (half ? '½' : '') + '<span style="opacity:0.2">' + '★'.repeat(5 - full - (half ? 1 : 0)) + '</span>';
     }
 
     function timeAgo(dateStr) {
@@ -724,27 +724,17 @@
     }
 
     async function loadFeed() {
-      if (!followingIds.length) {
-        showEmptyFeed();
-        return;
-      }
-
-      // Fetch ratings + reviews from everyone current user follows
+      if (!followingIds.length) { showEmptyFeed(); return; }
       const { data, error } = await sb.from('ratings')
         .select('id, user_id, rating, review, album_id, album_title, album_cover, created_at')
         .in('user_id', followingIds)
         .order('created_at', { ascending: false })
-        .limit(100); // fetch up to 100, paginate client-side
-
+        .limit(100);
       if (error || !data?.length) { showEmptyFeed(); return; }
-
-      // Fetch usernames for all these users
       const uids = [...new Set(data.map(r => r.user_id))];
       const { data: profiles } = await sb.from('profiles').select('id, username').in('id', uids);
       const usernameMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
-
       allFeedItems = data.map(r => ({ ...r, username: usernameMap[r.user_id] || 'member' }));
-
       renderFeed(true);
     }
 
@@ -758,20 +748,14 @@
       const list = document.getElementById('feedList');
       const moreBtn = document.getElementById('feedMore');
       const items = getFilteredItems();
-
       if (reset) { feedOffset = 0; list.innerHTML = ''; }
       if (!items.length) { showEmptyFeed(); return; }
-
       const page = items.slice(feedOffset, feedOffset + FEED_PAGE);
       feedOffset += page.length;
-
       page.forEach(r => {
-        const hasReview = r.review && r.review.trim().length > 0;
-        const tagClass = hasReview ? 'tag-review' : 'tag-rating';
-        const tagLabel = hasReview ? 'Review' : 'Rating';
-        const initial = (r.username || '?')[0].toUpperCase();
+        const hasReview = r.review?.trim().length > 0;
         const isMutual = mutualIds.includes(r.user_id);
-
+        const initial = (r.username || '?')[0].toUpperCase();
         const el = document.createElement('div');
         el.className = 'feed-item';
         el.innerHTML = `
@@ -779,22 +763,19 @@
             <div class="feed-avatar">${initial}</div>
           </a>
           <a href="album.html?id=${r.album_id}" style="flex-shrink:0">
-            <div class="feed-cover">
-              ${r.album_cover ? `<img src="${r.album_cover}" alt="" loading="lazy">` : ''}
-            </div>
+            <div class="feed-cover">${r.album_cover ? `<img src="${r.album_cover}" alt="" loading="lazy">` : ''}</div>
           </a>
           <div class="feed-body">
             <div class="feed-who">
-              <a href="profile.html?user=${r.user_id}">${r.username}</a>${isMutual ? ' <span style="font-size:0.65rem;color:var(--accent);opacity:0.7">mutual</span>' : ''}
-              rated <a href="album.html?id=${r.album_id}" class="feed-album-link">${r.album_title || 'an album'}</a>
+              <a href="profile.html?user=${r.user_id}" class="user-link">${r.username}</a>${isMutual ? '<span class="mutual-tag">mutual</span>' : ''}
+              rated <a href="album.html?id=${r.album_id}" class="album-link">${r.album_title || 'an album'}</a>
             </div>
-            <div class="feed-stars">${starsHtml(parseFloat(r.rating))}</div>
+            <div class="feed-stars">${starsHtml(r.rating)}</div>
             ${hasReview ? `<div class="feed-review">${r.review}</div>` : ''}
             <div class="feed-time">${timeAgo(r.created_at)}</div>
           </div>`;
         list.appendChild(el);
       });
-
       moreBtn.style.display = feedOffset < items.length ? 'block' : 'none';
     }
 
@@ -804,8 +785,8 @@
       document.getElementById('feedList').innerHTML = `
         <div class="feed-empty">
           ${followingIds.length === 0
-            ? `You're not following anyone yet.<br>Find people on the <a href="members.html">members page</a>.`
-            : `No activity from your friends yet.<br>Check back soon.`}
+            ? `You're not following anyone yet.<br><a href="members.html">Find people to follow →</a>`
+            : `None of your friends have rated anything yet.<br>Check back soon.`}
         </div>`;
       document.getElementById('feedMore').style.display = 'none';
     }
@@ -817,157 +798,37 @@
       renderFeed(true);
     }
 
-    // ── YOUR RECENT RATINGS ────────────────────────────────
-    async function loadYourRecent() {
-      const el = document.getElementById('yourRecentList');
-      const { data } = await sb.from('ratings')
-        .select('album_id, album_title, album_cover, rating')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (!data?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No ratings yet.</div>'; return; }
-
-      el.innerHTML = data.map(r => `
-        <div class="your-recent-item" onclick="window.location.href='album.html?id=${r.album_id}'">
-          <div class="your-recent-thumb">
-            ${r.album_cover ? `<img src="${r.album_cover}" alt="" loading="lazy">` : ''}
-          </div>
-          <div class="your-recent-info">
-            <div class="your-recent-title">${r.album_title || 'Unknown album'}</div>
-          </div>
-          <div class="your-recent-rating">★ ${parseFloat(r.rating).toFixed(1)}</div>
-        </div>`).join('');
-    }
-
-    // ── MUTUALS ────────────────────────────────────────────
-    async function loadMutuals() {
-      const el = document.getElementById('mutualList');
-      if (!mutualIds.length) {
-        el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No mutuals yet.</div>';
-        return;
-      }
-
-      const { data: profiles } = await sb.from('profiles')
-        .select('id, username')
-        .in('id', mutualIds)
-        .limit(8);
-
-      if (!profiles?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No mutuals yet.</div>'; return; }
-
-      // Get rating counts for each mutual
-      const counts = await Promise.all(profiles.map(async p => {
-        const { count } = await sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', p.id);
-        return { ...p, count: count ?? 0 };
-      }));
-
-      el.innerHTML = counts.map(p => `
-        <div class="mutual-item" onclick="window.location.href='profile.html?user=${p.id}'">
-          <div class="mutual-avatar">${p.username[0].toUpperCase()}</div>
-          <div class="mutual-name">${p.username}</div>
-          <div class="mutual-rating-count">${p.count} ratings</div>
-        </div>`).join('');
-    }
-
-    // ── SUGGESTED FOLLOWS ──────────────────────────────────
-    async function loadSuggested() {
-      const el = document.getElementById('suggestList');
-
-      // Suggest: people followed by people you follow, who you don't follow yet
-      // Simple fallback: just get active members not in your followingIds
-      const excluded = [...followingIds, currentUser.id];
-
-      const { data: profiles } = await sb.from('profiles')
-        .select('id, username')
-        .not('id', 'in', `(${excluded.join(',')})`)
-        .limit(20);
-
-      if (!profiles?.length) { el.innerHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:0.5rem 0">No suggestions right now.</div>'; return; }
-
-      // Sort by who has the most ratings (most active)
-      const withCounts = await Promise.all((profiles || []).map(async p => {
-        const { count } = await sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', p.id);
-        return { ...p, count: count ?? 0 };
-      }));
-
-      const sorted = withCounts.sort((a, b) => b.count - a.count).slice(0, 5);
-
-      el.innerHTML = sorted.map(p => `
-        <div class="suggest-item">
-          <div class="suggest-avatar">${p.username[0].toUpperCase()}</div>
-          <div style="flex:1;min-width:0">
-            <div class="suggest-name">${p.username}</div>
-            <div class="suggest-meta">${p.count} ratings</div>
-          </div>
-          <button class="suggest-follow-btn" id="sfbtn-${p.id}" onclick="toggleSuggestFollow('${p.id}', this)">Follow</button>
-        </div>`).join('');
-    }
-
-    async function toggleSuggestFollow(userId, btn) {
-      if (btn.classList.contains('following')) {
-        await sb.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
-        btn.textContent = 'Follow';
-        btn.classList.remove('following');
-      } else {
-        await sb.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
-        await sb.from('notifications').insert({ user_id: userId, type: 'follow', from_user_id: currentUser.id });
-        btn.textContent = 'Following';
-        btn.classList.add('following');
-        followingIds.push(userId);
-      }
-    }
-
-    // ── NOTIFICATIONS ──────────────────────────────────────
+    // ── NOTIFICATIONS ─────────────────────────────────────
     async function loadNotifications() {
-      if (!currentUser) return;
-      const { data } = await sb.from('notifications')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
+      const { data } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20);
       const badge = document.getElementById('bellBadge');
       const unread = (data || []).filter(n => !n.read);
       if (unread.length) { badge.style.display = 'flex'; badge.textContent = unread.length > 9 ? '9+' : unread.length; }
-
-      const fromIds = [...new Set((data || []).map(n => n.from_user_id).filter(Boolean))];
+      const fromIds = [...new Set((data||[]).map(n=>n.from_user_id).filter(Boolean))];
       const { data: nProfs } = await sb.from('profiles').select('id, username').in('id', fromIds);
-      const nMap = Object.fromEntries((nProfs || []).map(p => [p.id, p.username]));
-
+      const nMap = Object.fromEntries((nProfs||[]).map(p=>[p.id, p.username]));
       const list = document.getElementById('notifList');
       if (!data?.length) return;
       list.innerHTML = data.map(n => {
         const who = nMap[n.from_user_id] || 'Someone';
         const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const msg = n.type === 'follow' ? `<strong>${who}</strong> followed you` : n.type;
-        return `<div class="notif-item ${n.read ? '' : 'unread'}">
-          <div class="notif-dot ${n.read ? 'read' : ''}"></div>
-          <div style="flex:1"><div style="font-size:0.82rem">${msg}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${date}</div></div>
-        </div>`;
+        return `<div class="notif-item ${n.read?'':'unread'}"><div class="notif-dot ${n.read?'read':''}"></div><div style="flex:1"><div style="font-size:0.82rem">${msg}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${date}</div></div></div>`;
       }).join('');
     }
 
-    function toggleNotifs() {
-      document.getElementById('notifPanel').classList.toggle('open');
-      markAllRead();
-    }
-
+    function toggleNotifs() { document.getElementById('notifPanel').classList.toggle('open'); markAllRead(); }
     async function markAllRead() {
       if (!currentUser) return;
       await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
       document.getElementById('bellBadge').style.display = 'none';
     }
-
     document.addEventListener('click', e => {
       const panel = document.getElementById('notifPanel');
       const bell = document.getElementById('bellBtn');
       if (panel && !panel.contains(e.target) && bell && !bell.contains(e.target)) panel.classList.remove('open');
     });
-
-    async function signOut() {
-      await sb.auth.signOut();
-      window.location.href = 'index.html';
-    }
+    async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
     init();
   </script>
