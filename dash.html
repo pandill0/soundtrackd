@@ -140,7 +140,8 @@
     .featured-cover { width: 200px; height: 200px; flex-shrink: 0; background: var(--surface2); overflow: hidden; }
     .featured-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
     .featured-card:hover .featured-cover img { transform: scale(1.04); }
-    .featured-info { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+    .featured-info { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; min-width: 0; }
+    .featured-footer { margin-top: auto; }
     .featured-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
     .featured-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 24px rgba(74,158,107,0.12); }
     .featured-artist { font-size: 0.88rem; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
@@ -204,6 +205,16 @@
     .feed-empty a { color: var(--accent); }
     .feed-more { font-size: 0.78rem; color: var(--muted); text-align: center; padding: 1.25rem 0 0; cursor: pointer; transition: color 0.2s; letter-spacing: 0.04em; }
     .feed-more:hover { color: var(--accent); }
+
+    /* ── LISTS ── */
+    .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .list-card { background: var(--surface); padding: 1.25rem; cursor: pointer; transition: background 0.2s; display: block; color: inherit; text-decoration: none; }
+    .list-card:hover { background: var(--surface2); }
+    .list-covers { display: flex; gap: 3px; margin-bottom: 0.75rem; }
+    .list-cover { width: 40px; height: 40px; background: var(--surface2); overflow: hidden; flex-shrink: 0; }
+    .list-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .list-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+    .list-meta { font-size: 0.75rem; color: var(--muted); }
 
     /* pulse skeleton */
     @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
@@ -325,6 +336,16 @@
       <div class="feed-more" id="feedMore" style="display:none" onclick="loadMoreFeed()">Load more →</div>
     </section>
 
+    <!-- POPULAR LISTS -->
+    <section style="padding: 0 0 3rem">
+      <div class="section-divider">
+        <h2>Popular lists</h2>
+        <div class="line"></div>
+        <a href="lists.html" style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">See all →</a>
+      </div>
+      <div class="list-grid" id="listGrid"></div>
+    </section>
+
   </div>
 
   <footer>
@@ -365,18 +386,19 @@
     const FEATURED_TTL    = 6 * 60 * 60 * 1000;
     const LASTFM_KEY      = 'c04398910fb731d86c172d1a8e658d4a';
 
+    // All caches use localStorage so they survive the index→dash redirect
     function getCachedAlbums(key, expKey) {
       try {
-        const d = sessionStorage.getItem(key);
-        const exp = parseInt(sessionStorage.getItem(expKey) || '0');
+        const d = localStorage.getItem(key);
+        const exp = parseInt(localStorage.getItem(expKey) || '0');
         if (d && Date.now() < exp) return JSON.parse(d);
       } catch {}
       return null;
     }
     function setCachedAlbums(key, expKey, data) {
       try {
-        sessionStorage.setItem(key, JSON.stringify(data));
-        sessionStorage.setItem(expKey, Date.now() + ALBUMS_TTL);
+        localStorage.setItem(key, JSON.stringify(data));
+        localStorage.setItem(expKey, String(Date.now() + ALBUMS_TTL));
       } catch {}
     }
     function getFeaturedCache() {
@@ -669,10 +691,41 @@
       loadHeroBgAlbums();
       loadTrendingAlbums();
       loadFeaturedScrollCached();
+      loadPopularLists();
 
       // Then load social content
       await loadSocialData();
       loadNotifications();
+    }
+
+    async function loadPopularLists() {
+      const grid = document.getElementById('listGrid');
+      if (!grid) return;
+      const { data, error } = await sb.from('lists')
+        .select('id, title, description, type, items, user_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (error || !data?.length) {
+        grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;grid-column:1/-1;padding:1rem 0">No lists yet. <a href="lists.html" style="color:var(--accent)">Create one →</a></p>';
+        return;
+      }
+      const userIds = [...new Set(data.map(l => l.user_id))];
+      const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+      const userMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+      grid.innerHTML = data.map(l => {
+        const items = l.items || [];
+        const covers = [0,1,2,3].map(i => items[i]
+          ? `<div class="list-cover">${items[i].cover ? `<img src="${items[i].cover}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--muted)">${(items[i].title||'').slice(0,2).toUpperCase()}</div>`}</div>`
+          : `<div class="list-cover"></div>`
+        ).join('');
+        const username = userMap[l.user_id] || 'anonymous';
+        const date = new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        return `<a href="list.html?id=${l.id}" class="list-card">
+          <div class="list-covers">${covers}</div>
+          <div class="list-title">${l.title}</div>
+          <div class="list-meta"><span style="color:var(--accent2)">${username}</span> · ${items.length} item${items.length !== 1 ? 's' : ''} · ${date}</div>
+        </a>`;
+      }).join('');
     }
 
     async function loadSocialData() {
