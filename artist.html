@@ -232,16 +232,35 @@
     }
 
     // ── render discography ─────────────────────────────────
-    function renderDiscography(albums) {
+    async function renderDiscography(albums) {
       const grid = document.getElementById('albumGrid');
       const filtered = (albums || []).filter(a => a.record_type === 'album');
       if (filtered.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;padding:1.5rem 0;color:var(--muted);font-size:0.88rem">No albums found.</div>';
         return;
       }
+      // Fetch community ratings in batch
+      const albumIds = filtered.map(a => String(a.id));
+      let ratingMap = {};
+      try {
+        const { data: ratings } = await sb.from('ratings').select('album_id, rating').in('album_id', albumIds);
+        if (ratings) {
+          const totals = {};
+          ratings.forEach(r => {
+            if (!totals[r.album_id]) totals[r.album_id] = { sum: 0, count: 0 };
+            totals[r.album_id].sum += parseFloat(r.rating);
+            totals[r.album_id].count++;
+          });
+          Object.entries(totals).forEach(([id, { sum, count }]) => {
+            ratingMap[id] = { avg: (sum / count).toFixed(1), count };
+          });
+        }
+      } catch(e) {}
       grid.innerHTML = filtered.map(a => {
         const cover = a.cover_medium || a.cover_small || a.cover || '';
         const year = a.release_date ? a.release_date.slice(0, 4) : '';
+        const r = ratingMap[String(a.id)];
+        const ratingHtml = r ? `<div style="font-size:0.7rem;color:var(--star);margin-top:2px">&#9733; ${r.avg} <span style="color:var(--muted)">(${r.count})</span></div>` : '';
         return `
           <a href="album.html?id=${a.id}" class="album-card">
             <div class="album-card-art">
@@ -251,6 +270,7 @@
             <div class="album-card-info">
               <div class="album-card-title">${a.title}</div>
               ${year ? `<div class="album-card-year">${year}</div>` : ''}
+              ${ratingHtml}
             </div>
           </a>`;
       }).join('');
@@ -283,7 +303,7 @@
         ]);
 
         renderTracks(tracksRes?.data || []);
-        renderDiscography(albumsRes?.data || []);
+        await renderDiscography(albumsRes?.data || []);
 
       } catch (err) {
         console.error(err);
