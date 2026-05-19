@@ -50,6 +50,8 @@
     .profile-meta { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.03em; margin-top: 6px; }
     .profile-stats { display: flex; gap: 2rem; margin-top: 1.25rem; flex-wrap: wrap; }
     .stat { text-align: center; }
+    .stat-link { cursor: pointer; transition: opacity 0.2s; }
+    .stat-link:hover { opacity: 0.7; }
     .stat-num { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 400; color: var(--text); display: block; }
     .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
@@ -252,8 +254,8 @@
           <div class="profile-stats">
             <div class="stat"><span class="stat-num" id="statReviews">0</span><span class="stat-label">Reviews</span></div>
             <div class="stat"><span class="stat-num" id="statLists">0</span><span class="stat-label">Lists</span></div>
-            <div class="stat"><span class="stat-num" id="statFollowers">0</span><span class="stat-label">Followers</span></div>
-            <div class="stat"><span class="stat-num" id="statFollowing">0</span><span class="stat-label">Following</span></div>
+            <div class="stat stat-link" id="statFollowersLink" onclick="goFollowers('followers')"><span class="stat-num" id="statFollowers">0</span><span class="stat-label">Followers</span></div>
+            <div class="stat stat-link" id="statFollowingLink" onclick="goFollowers('following')"><span class="stat-num" id="statFollowing">0</span><span class="stat-label">Following</span></div>
           </div>
         </div>
       </div>
@@ -577,6 +579,11 @@
       }
     }
 
+    function goFollowers(tab) {
+      if (!viewedUserId) return;
+      window.location.href = `followers.html?user=${viewedUserId}&tab=${tab}`;
+    }
+
     async function toggleFollow() {
       if (!currentUser) { window.location.href = 'index.html'; return; }
       const btn = document.getElementById('followBtn');
@@ -628,7 +635,11 @@
       data.forEach(n => {
         const username = nUsernameMap[n.from_user_id] || 'Someone';
         const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const msg = n.type === 'follow' ? `<strong>${username}</strong> followed you` : n.type;
+        const msg = n.type === 'follow'
+          ? `<strong>${username}</strong> followed you`
+          : n.type === 'review_like'
+          ? `<strong>${username}</strong> liked your review`
+          : n.type;
         list.innerHTML += `
           <div class="notif-item ${n.read ? '' : 'unread'}">
             <div class="notif-dot ${n.read ? 'read' : ''}"></div>

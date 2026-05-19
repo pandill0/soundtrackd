@@ -86,6 +86,16 @@
     .review-date { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
     .empty-reviews { padding: 2.5rem 0; color: var(--muted); font-size: 0.88rem; }
 
+    /* FRIENDS PANEL */
+    .friends-panel { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
+    .friends-panel-header { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+    .friends-list { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .friend-chip { display: flex; align-items: center; gap: 0.5rem; background: var(--surface2); padding: 5px 10px 5px 6px; border: 1px solid var(--border); transition: border-color 0.15s; text-decoration: none; color: var(--text); font-size: 0.8rem; }
+    .friend-chip:hover { border-color: var(--accent); }
+    .friend-chip-avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 0.62rem; color: var(--accent); font-weight: 500; overflow: hidden; flex-shrink: 0; }
+    .friend-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .friend-chip-stars { color: var(--star); font-size: 0.7rem; letter-spacing: -1px; }
+
     /* MODAL */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
@@ -240,6 +250,12 @@
             <button class="btn-ghost" id="myRatingBtn" style="display:none"></button>
           </div>
         </div>
+      </div>
+
+      <!-- FRIENDS PANEL -->
+      <div class="friends-panel" id="friendsPanel">
+        <div class="friends-panel-header">Friends who rated this</div>
+        <div class="friends-list" id="friendsList"></div>
       </div>
 
       <div class="section-divider"><h2>Tracklist</h2><div class="line"></div></div>
@@ -572,6 +588,15 @@
         review.likeCount++;
         btn.classList.add('liked');
         btn.querySelector('svg').setAttribute('fill', 'currentColor');
+        // Notify the review author (not if they liked their own review)
+        if (review.user_id && review.user_id !== currentUser.id) {
+          await sb.from('notifications').insert({
+            user_id: review.user_id,
+            type: 'review_like',
+            from_user_id: currentUser.id,
+            read: false
+          }).catch(() => {}); // non-critical
+        }
       }
       countEl.textContent = review.likeCount || '';
       btn.disabled = false;
@@ -699,6 +724,55 @@
 
     async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
+    // ── friends ratings ────────────────────────────────────
+    async function loadFriendsRatings() {
+      if (!currentUser) return;
+
+      // Get who the current user follows
+      const { data: followRows } = await sb.from('follows')
+        .select('following_id')
+        .eq('follower_id', currentUser.id);
+      if (!followRows || followRows.length === 0) return;
+
+      const friendIds = followRows.map(r => r.following_id);
+
+      // Get their ratings for this album
+      const { data: ratings } = await sb.from('ratings')
+        .select('user_id, rating')
+        .eq('album_id', ALBUM_ID)
+        .in('user_id', friendIds);
+      if (!ratings || ratings.length === 0) return;
+
+      // Fetch profiles
+      const ratedIds = ratings.map(r => r.user_id);
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', ratedIds);
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+
+      const panel = document.getElementById('friendsPanel');
+      const list = document.getElementById('friendsList');
+      list.innerHTML = '';
+
+      ratings.forEach(r => {
+        const p = profileMap[r.user_id];
+        if (!p) return;
+        const initial = p.username.charAt(0).toUpperCase();
+        const avatarInner = p.avatar_url
+          ? `<img src="${p.avatar_url}" alt="${p.username}" onerror="this.parentElement.textContent='${initial}'" />`
+          : initial;
+        const stars = '★'.repeat(Math.floor(r.rating)) + (r.rating % 1 ? '½' : '');
+        list.innerHTML += `
+          <a href="profile.html?user=${p.id}" class="friend-chip">
+            <div class="friend-chip-avatar">${avatarInner}</div>
+            <span>${p.username}</span>
+            <span class="friend-chip-stars">${stars}</span>
+          </a>`;
+      });
+
+      if (ratings.length > 0) panel.style.display = 'block';
+    }
+
     // ── main init ──────────────────────────────────────────
     async function init() {
       if (!ALBUM_ID) {
@@ -722,7 +796,10 @@
       await loadRatings();
       await loadTrackRatings();
       await loadReviews();
-      if (currentUser) await loadMyRating();
+      if (currentUser) {
+        await loadMyRating();
+        await loadFriendsRatings();
+      }
     }
 
     // ── track ratings ──────────────────────────────────────

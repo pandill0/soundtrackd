@@ -51,6 +51,14 @@
     @media (max-width: 680px) { .nav-links a:nth-child(2) { display: none; } }
     @media (max-width: 580px) { .nav-links { display: none; } }
 
+    /* MOBILE BOTTOM NAV */
+    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,15,11,0.96); backdrop-filter: blur(12px); border-top: 1px solid var(--border); z-index: 200; padding: 0; }
+    .mobile-nav-inner { display: flex; justify-content: space-around; align-items: stretch; }
+    .mobile-nav a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 12px; flex: 1; color: var(--muted); font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; transition: color 0.2s; }
+    .mobile-nav a:hover, .mobile-nav a.active { color: var(--accent); }
+    .mobile-nav svg { flex-shrink: 0; }
+    @media (max-width: 580px) { .mobile-nav { display: block; } body { padding-bottom: 64px; } }
+
     .nav-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; margin-left: auto; }
     .btn-signin { font-family: 'Nunito', sans-serif; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.5rem 1.25rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
     .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
@@ -347,6 +355,32 @@
     </section>
 
   </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <a href="dash.html" class="active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="search.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </a>
+      <a href="charts.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Charts
+      </a>
+      <a href="lists.html">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Lists
+      </a>
+      <a href="profile.html" id="mobileProfileLink">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+    </div>
+  </nav>
 
   <footer>
     <div class="footer-inner">
@@ -865,7 +899,11 @@
       list.innerHTML = data.map(n => {
         const who = nMap[n.from_user_id] || 'Someone';
         const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const msg = n.type === 'follow' ? `<strong>${who}</strong> followed you` : n.type;
+        const msg = n.type === 'follow'
+          ? `<strong>${who}</strong> followed you`
+          : n.type === 'review_like'
+          ? `<strong>${who}</strong> liked your review`
+          : n.type;
         return `<div class="notif-item ${n.read?'':'unread'}"><div class="notif-dot ${n.read?'read':''}"></div><div style="flex:1"><div style="font-size:0.82rem">${msg}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${date}</div></div></div>`;
       }).join('');
     }
