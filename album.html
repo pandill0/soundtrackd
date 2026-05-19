@@ -273,6 +273,12 @@
         <div class="review-list" id="reviewList"></div>
       </div>
 
+      <!-- MORE BY ARTIST -->
+      <div id="moreByArtistSection" style="display:none">
+        <div class="section-divider"><h2 id="moreByArtistLabel">More by artist</h2><div class="line"></div></div>
+        <div id="moreByArtistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1.25rem;margin-bottom:3rem"></div>
+      </div>
+
     </div>
   </div>
 
@@ -724,6 +730,33 @@
 
     async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
+    // ── more by artist ──────────────────────────────────
+    async function loadMoreByArtist(artistId, artistName, currentAlbumId) {
+      try {
+        const res = await fetch(`${WORKER}/artist/${artistId}/albums?limit=12`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const albums = (data.data || []).filter(a => String(a.id) !== String(currentAlbumId));
+        if (!albums.length) return;
+
+        document.getElementById('moreByArtistLabel').textContent = `More by ${artistName}`;
+        const grid = document.getElementById('moreByArtistGrid');
+        albums.slice(0, 8).forEach(a => {
+          const cover = a.cover_medium;
+          const year = a.release_date?.slice(0, 4) || '';
+          grid.innerHTML += `
+            <a href="album.html?id=${a.id}" style="display:block;color:inherit;text-decoration:none">
+              <div style="width:100%;aspect-ratio:1;background:var(--surface2);margin-bottom:0.6rem;overflow:hidden;position:relative">
+                ${cover ? `<img src="${cover}" alt="${a.title}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ''}
+              </div>
+              <div style="font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.title}</div>
+              <div style="font-size:0.72rem;color:var(--muted)">${year}</div>
+            </a>`;
+        });
+        document.getElementById('moreByArtistSection').style.display = 'block';
+      } catch(e) {}
+    }
+
     // ── friends ratings ────────────────────────────────────
     async function loadFriendsRatings() {
       if (!currentUser) return;
@@ -799,6 +832,10 @@
       if (currentUser) {
         await loadMyRating();
         await loadFriendsRatings();
+      }
+      // Load more by artist in background (non-blocking)
+      if (albumData?.artist?.id) {
+        loadMoreByArtist(albumData.artist.id, albumData.artist.name, ALBUM_ID);
       }
     }
 

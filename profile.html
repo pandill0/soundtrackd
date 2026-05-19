@@ -252,8 +252,9 @@
           <div class="profile-website" id="websiteEl" style="display:none"></div>
           <div class="profile-meta" id="memberSinceEl">Member</div>
           <div class="profile-stats">
+            <div class="stat"><span class="stat-num" id="statRatings">0</span><span class="stat-label">Ratings</span></div>
+            <div class="stat"><span class="stat-num" id="statAvg">—</span><span class="stat-label">Avg</span></div>
             <div class="stat"><span class="stat-num" id="statReviews">0</span><span class="stat-label">Reviews</span></div>
-            <div class="stat"><span class="stat-num" id="statLists">0</span><span class="stat-label">Lists</span></div>
             <div class="stat stat-link" id="statFollowersLink" onclick="goFollowers('followers')"><span class="stat-num" id="statFollowers">0</span><span class="stat-label">Followers</span></div>
             <div class="stat stat-link" id="statFollowingLink" onclick="goFollowers('following')"><span class="stat-num" id="statFollowing">0</span><span class="stat-label">Following</span></div>
           </div>
@@ -490,11 +491,18 @@
 
     // ── STATS ──────────────────────────────────────────────
     async function loadStats() {
-      const [reviews, followers, following] = await Promise.all([
+      const [allRatings, reviews, followers, following] = await Promise.all([
+        sb.from('ratings').select('rating').eq('user_id', viewedUserId),
         sb.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', viewedUserId).not('review', 'is', null),
         sb.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', viewedUserId),
         sb.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', viewedUserId),
       ]);
+      const ratingData = allRatings.data || [];
+      document.getElementById('statRatings').textContent = ratingData.length;
+      if (ratingData.length > 0) {
+        const avg = ratingData.reduce((s, r) => s + parseFloat(r.rating), 0) / ratingData.length;
+        document.getElementById('statAvg').textContent = avg.toFixed(1);
+      }
       document.getElementById('statReviews').textContent = reviews.count ?? 0;
       document.getElementById('statFollowers').textContent = followers.count ?? 0;
       document.getElementById('statFollowing').textContent = following.count ?? 0;
