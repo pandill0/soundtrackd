@@ -72,6 +72,8 @@
     .album-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .album-artist { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .album-year { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .album-community { font-size: 0.72rem; color: var(--star); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .album-community span.rating-count { color: var(--muted); }
     .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.15); }
 
     /* TRACK RESULTS */
@@ -203,7 +205,7 @@
         if (!res.ok) { setState('error'); return; }
         const data = await res.json();
 
-        if (searchType === 'album') renderAlbums(data.data || [], q);
+        if (searchType === 'album') await renderAlbums(data.data || [], q);
         else if (searchType === 'track') renderTracks(data.data || [], q);
         else if (searchType === 'artist') renderArtists(data.data || [], q);
       } catch (e) {
@@ -211,7 +213,7 @@
       }
     }
 
-    function renderAlbums(items, q) {
+    async function renderAlbums(items, q) {
       const filtered = items.filter(Boolean);
       if (!filtered.length) { setState('empty'); return; }
       setState('results');
@@ -221,10 +223,33 @@
       const grid = document.getElementById('albumResults');
       grid.style.display = 'grid';
       grid.innerHTML = '';
+
+      // Fetch community ratings for these albums in one batch
+      const albumIds = filtered.map(a => String(a.id));
+      let ratingMap = {};
+      try {
+        const { data: ratings } = await sb.from('ratings').select('album_id, rating').in('album_id', albumIds);
+        if (ratings) {
+          const totals = {};
+          ratings.forEach(r => {
+            if (!totals[r.album_id]) totals[r.album_id] = { sum: 0, count: 0 };
+            totals[r.album_id].sum += parseFloat(r.rating);
+            totals[r.album_id].count++;
+          });
+          Object.entries(totals).forEach(([id, { sum, count }]) => {
+            ratingMap[id] = { avg: (sum / count).toFixed(1), count };
+          });
+        }
+      } catch(e) {}
+
       filtered.forEach(album => {
         const cover = album.cover_medium;
         const year = album.release_date?.slice(0, 4) || '';
         const artist = album.artist?.name || '';
+        const r = ratingMap[String(album.id)];
+        const ratingHtml = r
+          ? `<div class="album-community">★ ${r.avg} <span class="rating-count">(${r.count})</span></div>`
+          : '';
         grid.innerHTML += `
           <a href="album.html?id=${album.id}" class="album-card">
             <div class="album-art" style="background:var(--surface2)">
@@ -234,6 +259,7 @@
             <div class="album-title">${album.title}</div>
             <div class="album-artist">${artist}</div>
             <div class="album-year">${year}</div>
+            ${ratingHtml}
           </a>`;
       });
     }
@@ -293,7 +319,7 @@
       try {
         const res = await fetch(`${WORKER}/artist/${artistId}/albums?limit=20`);
         const data = await res.json();
-        renderAlbums(data.data || [], artistName);
+        await renderAlbums(data.data || [], artistName);
       } catch { setState('error'); }
     }
 
